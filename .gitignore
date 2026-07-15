@@ -1,0 +1,5 @@
+.env
+test.py
+assets/*
+!assets/template.png
+!assets/font.ttf
