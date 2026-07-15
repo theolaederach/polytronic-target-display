@@ -5,36 +5,36 @@
 
 from PIL import Image, ImageDraw, ImageFont
 
-def write_target(image_path, position, result_path, base_color = (255, 0, 0), color_one = (255,255,0), size = 15, thickness = 5):
+def write_target(image_path, position, result_path, base_color = (255, 0, 0), color_one = (255,255,0), size = 15, thickness = 4):
     """
     Overwrite the target image with the position on shots.
     The position is a list of tuples (x, y) representing the coordinates of the shots. x and y must be 0-1000 pixels.
     the target image must be a PNG with an alpha channel and a square size.
     """
-    try :
-        fnt = ImageFont.truetype("assets/font.ttf",30)
-    except :
-        fnt = ImageFont.load_default()
-        print("Warning: font not found, using default font")
 
-    try :
-        target = Image.open(image_path).convert("RGBA")
-        resolution = target.size[0]
-    except :
-        print("Error: could not open image ", image_path)
-        return
+    fnt = ImageFont.truetype("assets/font.ttf",30)
 
-    try :
-        calc = Image.new("RGBA", target.size, (0, 0, 0, 0))
-    except :
-        print("Error: could not create new image")
-        return
+    fnt = ImageFont.load_default()
+    print("Warning: font not found, using default font")
 
-    try :
-        draw = ImageDraw.Draw(calc)
-    except :
-        print("Error: could not create draw object")
-        return
+
+    target = Image.open(image_path).convert("RGBA")
+    resolution = target.size[0]
+
+    print("Error: could not open image ", image_path)
+    return
+
+
+    calc = Image.new("RGBA", target.size, (0, 0, 0, 0))
+
+    print("Error: could not create new image")
+    return
+
+
+    draw = ImageDraw.Draw(calc)
+
+    print("Error: could not create draw object")
+    return
 
     transparent = 265
     order = 0
@@ -68,3 +68,6 @@ def write_target(image_path, position, result_path, base_color = (255, 0, 0), co
     target_final = Image.alpha_composite(target, calc)
     target_final.save(result_path)
     print("Target written to ", result_path)
+
+# exemple usage :
+# write_target("assets/template.png", [(434,123),(567,234),(890,345)], "assets/result.png")

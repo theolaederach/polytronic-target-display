@@ -1,0 +1,42 @@
+html{
+    background-color: #434343;
+}
+body{
+    margin:0%;
+}
+h1{
+    color: red;
+}
+
+nav{
+    background-color: #3c3c3c;
+    display: flex;
+    height: 94vh;
+    width:min-content;
+    padding: 3vh;
+    border-radius: 0 20px 20px 0;
+}
+nav li {
+    list-style-type: none;
+    font-size: 1.5em;
+    color: white;
+    margin-right: 10px;
+    margin-bottom: 50px;
+    width:80%;
+    border-bottom: solid 1px white ;
+    padding: 10px;
+}
+
+nav li {
+    transition: transform 0.4s cubic-bezier(0.390, 0.575, 0.565, 1.000);
+    transform: scale(1);
+}
+
+nav li:hover {
+    transform: scale(1.2);
+}
+nav a{
+    padding-right:auto;
+    text-decoration: none;
+    color: white;
+}

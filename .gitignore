@@ -1,8 +1,22 @@
 .env
-__pycache__
 
 test.py
 
 assets/*
 !assets/template.png
 !assets/font.ttf
+
+.venv/
+
+*.pyc
+__pycache__/
+
+instance/
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+dist/
+build/
+*.egg-info/
