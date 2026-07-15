@@ -4,7 +4,6 @@
 # Description : overwrite the target image with the position on shots
 
 from PIL import Image, ImageDraw, ImageFont
-from test import pos
 
 def write_target(image_path, position, result_path, base_color = (255, 0, 0), color_one = (255,255,0), size = 15, thickness = 5):
     """
@@ -12,17 +11,35 @@ def write_target(image_path, position, result_path, base_color = (255, 0, 0), co
     The position is a list of tuples (x, y) representing the coordinates of the shots. x and y must be 0-1000 pixels.
     the target image must be a PNG with an alpha channel and a square size.
     """
-    fnt = ImageFont.truetype("assets/font.ttf",30)
+    try :
+        fnt = ImageFont.truetype("assets/font.ttf",30)
+    except :
+        fnt = ImageFont.load_default()
+        print("Warning: font not found, using default font")
 
-    target = Image.open(image_path).convert("RGBA")
-    resolution = target.size[0]
+    try :
+        target = Image.open(image_path).convert("RGBA")
+        resolution = target.size[0]
+    except :
+        print("Error: could not open image ", image_path)
+        return
 
-    calc = Image.new("RGBA", target.size, (0, 0, 0, 0))
+    try :
+        calc = Image.new("RGBA", target.size, (0, 0, 0, 0))
+    except :
+        print("Error: could not create new image")
+        return
 
-    draw = ImageDraw.Draw(calc)
+    try :
+        draw = ImageDraw.Draw(calc)
+    except :
+        print("Error: could not create draw object")
+        return
 
     transparent = 265
     order = 0
+
+    print("Writing target ",image_path ," with ", len(position), " shots ")
 
     for coord in position :
         x = coord[0]  * resolution / 1000
@@ -46,8 +63,8 @@ def write_target(image_path, position, result_path, base_color = (255, 0, 0), co
         draw.line((x, y - size, x, y + size), fill=color, width=thickness)
         draw.text((x +size, y + size),str(order), fill=color, font=fnt)
 
+        print("Shot ", order, " at ", x,";", y)
+
     target_final = Image.alpha_composite(target, calc)
     target_final.save(result_path)
-
-
-write_target("assets/template.png", [(0,0),(1000,1000),(500,500)], "assets/result.png")
+    print("Target written to ", result_path)

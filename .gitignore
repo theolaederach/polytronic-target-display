@@ -1,5 +1,8 @@
 .env
+__pycache__
+
 test.py
+
 assets/*
 !assets/template.png
 !assets/font.ttf
