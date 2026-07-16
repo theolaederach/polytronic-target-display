@@ -6,18 +6,12 @@
 from flask import Flask, render_template
 
 from app_api import api
+from app_routes import routes
 
 app = Flask(__name__)
 
-
 app.register_blueprint(api, url_prefix='/api')
-
-@app.route('/')
-def index():
-    return render_template('home.html')
-
-
-
+app.register_blueprint(routes,url_prefix='/')
 
 
 

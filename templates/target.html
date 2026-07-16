@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='js/update-target.js') }}"></script>
+    <title>Target Display | Target</title>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="/"><strong>Home</strong></a></li>
+            <li><a href="">Target</a></li>
+            <li><a href="">Statistics</a></li>
+            <li><a href="">Credits</a></li>
+        </ul>
+    </nav>
+
+    <div class="content">
+        <h1>Target Display</h1>
+
+            <div class="target-container">
+                <h2>Target 1</h2>
+                <img src="{{ url_for('static', filename='target1.png') }}" alt="Target 1" class="target">
+            </div>
+    </div>
+
+</body>
+</html>
