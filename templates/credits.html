@@ -5,18 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <title>Target Display | Home</title>
+    <title>Target Display | Credits</title>
 </head>
 <body>
     <nav>
         <ul>
-            <li><a href=""><strong>Home</strong></a></li>
+            <li><a href="/"><strong>Home</strong></a></li>
             <li><a href="/target">Target</a></li>
             <li><a href="">Statistics</a></li>
             <li><a href="/credits">Credits</a></li>
         </ul>
     </nav>
-
-
+    <div class="content">
+        <h1>Credits</h1>
+        <div class="credits container">
+            <p>Thank you for using Target Display. This project was created by:</p>
+            <ul>
+                <li><a href="https://github.com/theolaederach">Theo Läderach on Github</a></li>
+                <li>Les renards d'oleyres | societé de tirs</li>
+            </ul>
+        </div>
 </body>
 </html>

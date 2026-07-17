@@ -5,7 +5,7 @@
 
 from PIL import Image, ImageDraw, ImageFont
 
-def write_target(image_path, position, result_path, base_color = (255, 0, 0), color_one = (255,255,0), size = 15, thickness = 4):
+def write_target(image_path, position, result_path, base_color = (255, 0, 0), color_one = (255,255,0), size = 25, thickness = 8):
     """
     Overwrite the target image with the position on shots.
     The position is a list of tuples (x, y) representing the coordinates of the shots. x and y must be 0-1000 pixels.
@@ -32,7 +32,7 @@ def write_target(image_path, position, result_path, base_color = (255, 0, 0), co
 
 
     try :
-        fnt = ImageFont.truetype("assets/font.ttf",30)
+        fnt = ImageFont.truetype("assets/font.ttf",size*2)
     except Exception as e:
         fnt = ImageFont.load_default()
         print("Warning: font not found, using default",f"({e})")

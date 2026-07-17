@@ -3,7 +3,7 @@
 # Last update : 15.07.2026
 # Description : file who init the project and the web server. Run this file to start the project.
 
-from flask import Flask, render_template
+from flask import Flask
 
 from app_api import api
 from app_routes import routes

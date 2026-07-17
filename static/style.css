@@ -21,7 +21,7 @@ nav li {
     list-style-type: none;
     font-size: 1.5em;
     color: white;
-    margin-right: 10px;
+    margin-right: 20px;
     margin-bottom: 50px;
     width:80%;
     border-bottom: solid 1px white ;
@@ -46,17 +46,28 @@ div.content{
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
     height: 100vh;
     padding: 50px;
 }
+
+div.content h1{
+    font-size: 3em;
+    margin-bottom: 20px;
+    text-decoration:underline;
+}
+
+div.content img{
+    background-color: #616161;
+}
+
 img.target{
     width: 400px;
     height: 400px;
     object-fit: cover;
     border-radius: 20px;
 }
-div.target-container{
+div.container{
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -65,4 +76,16 @@ div.target-container{
     background-color: #4a4a4a;
     padding: 20px;
     border-radius: 10px;
+    animation: fadeInUp 1s ease-in-out;
+}
+
+@keyframes fadeInUp {
+  0% {
+    transform: translateY(50%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
