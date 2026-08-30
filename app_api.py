@@ -23,7 +23,7 @@ def get_shots():
 
     # Processing the tuple for js : [{ "x": -0.12, "y": 0.200, "number": 1 }, ...]
     shots = [
-        {"x": x, "y": y, "number": i + 1} for i, (x, y) in enumerate(raw_positions)
+        {"x": x, "y": y, "number": len(raw_positions) - i} for i, (x, y) in enumerate(raw_positions)
     ]
 
     return jsonify(shots)

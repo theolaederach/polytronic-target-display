@@ -1,3 +1,9 @@
+// Title : update target
+// Author : Gemini (Ai generated)
+// Last update : 30.08.2026
+// Description : fetch the list of the shot from the api and draw them on the target.
+
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 // Fonction de conversion : Mètres -> Pixels SVG
@@ -25,11 +31,26 @@ async function loadAndDrawShots() {
         */
 
     const svg = document.getElementById("target-svg");
-    const size = 15;
-    const thickness = 4;
-    const color = "rgba(255, 0, 0, 0.7)";
+    const size = 20;
+    const thickness = 6;
 
-    shots.forEach((shot) => {
+    const baseColor = "255, 0, 0";
+    const baseTransparent = 1.00;
+    const minTransparent = 0.40;
+    const specialColor = "rgba(0,170,255,1)";
+
+    shots.forEach((shot,index) => {
+      let color = "";
+      // the last shot is in a different color.
+      // So the last shot is the first un the array
+      if (index === 0) {
+        color = specialColor;
+      } else {
+        let transparent = baseTransparent - index / 10;
+        if (transparent < minTransparent) { transparent = minTransparent }
+        color = `rgba(${baseColor},${transparent})`;
+      }
+
       // Conversion des coordonnées (mètres -> SVG)
       const coords = metersToSvg(shot.x, shot.y);
       const x = coords.x;

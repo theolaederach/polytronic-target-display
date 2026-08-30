@@ -76,7 +76,7 @@ div.container {
     padding: 20px;
     border-radius: 10px;
     animation: fadeInUp 1s ease-in-out;
-    width: 1024px;
+    width: 512px;
 }
 
 svg {
@@ -85,7 +85,7 @@ svg {
 }
 .shot-number {
     font-family: sans-serif;
-    font-size: 14px;
+    font-size: 40px;
     font-weight: bold;
     user-select: none;
 }
@@ -100,19 +100,4 @@ svg {
         transform: translateY(0);
         opacity: 1;
     }
-}
-.target-container {
-    max-width: 600px;
-    margin: 20px auto;
-}
-svg {
-    width: 100%;
-    height: auto;
-    border: 1px solid #ccc;
-}
-.shot-number {
-    font-family: sans-serif;
-    font-size: 14px;
-    font-weight: bold;
-    user-select: none;
 }
