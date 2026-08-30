@@ -1,15 +1,23 @@
 from flask import Blueprint, render_template
 
-routes = Blueprint('routes', __name__,template_folder='templates')
+routes = Blueprint("routes", __name__, template_folder="templates")
 
-@routes.route('/')
+
+@routes.route("/")
 def home():
-    return render_template('home.html')
+    return render_template("home.html")
 
-@routes.route('/target')
+
+@routes.route("/target")
 def target():
-    return render_template('target.html')
+    return render_template("target.html")
 
-@routes.route('/credits')
+
+@routes.route("/credits")
 def credits():
-    return render_template('credits.html')
+    return render_template("credits.html")
+
+
+@routes.route("/test")
+def test():
+    return render_template("test.html")
