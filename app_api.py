@@ -1,35 +1,27 @@
-from flask import Blueprint, jsonify, request
+# Title : api routes
+# Author : theo.laerach
+# Last update : 30.08.2026
+# Description : manage api request
 
-from random_shot import random_shot
-from write_target import write_target
+from flask import Blueprint, jsonify
+
+import random_shot
 
 api = Blueprint("api", __name__, template_folder="templates")
 
 
-@api.route("/render_target", methods=["GET"])
-def render_target():
-    if request.method == "GET":
-        target_number = request.args["target_number"]
-
-        write_target(
-            "assets/template.png", random_shot(7), f"static/target{target_number}.png"
-        )
-        return f"Target {target_number} written"
-    else:
-        return "Method not allowed"
-
-
 @api.route("/")
 def hello_world():
-    return "Hello, World!"
+
+    return "Hello, World! This is the url from the api"
 
 
 @api.route("/shots", methods=["GET"])
 def get_shots():
-    # Si tes tirs sont stockés sous forme de liste de tuples : [(0.512, -0.220), (0.30, 0.220)]
-    raw_positions = [(0.012, -0.220), (0.30, 0.220), (0.490, 0.180), (0, 0), (0.1, 0.1)]
+    # The shots are stocked in tuple in list [(x,y),(x,y)]
+    raw_positions = random_shot.generate(num_shots=10)
 
-    # Transformation des tuples pour le JS : [{ "x": -0.12, "y": 0.200, "number": 1 }, ...]
+    # Processing the tuple for js : [{ "x": -0.12, "y": 0.200, "number": 1 }, ...]
     shots = [
         {"x": x, "y": y, "number": i + 1} for i, (x, y) in enumerate(raw_positions)
     ]
