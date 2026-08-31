@@ -5,10 +5,12 @@
 
 from flask import Blueprint, jsonify
 
+import database
 import random_shot
 
 api = Blueprint("api", __name__, template_folder="templates")
 
+database.readShot(1)
 
 @api.route("/")
 def hello_world():
