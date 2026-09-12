@@ -5,12 +5,10 @@
 
 from flask import Blueprint, jsonify
 
-import database
-import random_shot
+from database import database
 
 api = Blueprint("api", __name__, template_folder="templates")
 
-database.readShot(1)
 
 @api.route("/")
 def hello_world():
@@ -21,11 +19,12 @@ def hello_world():
 @api.route("/shots", methods=["GET"])
 def get_shots():
     # The shots are stocked in tuple in list [(x,y),(x,y)]
-    raw_positions = random_shot.generate(num_shots=10)
+    raw_positions = database.readShot(1779)
 
     # Processing the tuple for js : [{ "x": -0.12, "y": 0.200, "number": 1 }, ...]
     shots = [
-        {"x": x, "y": y, "number": len(raw_positions) - i} for i, (x, y) in enumerate(raw_positions)
+        {"x": x, "y": y, "number": len(raw_positions) - i}
+        for i, (x, y) in enumerate(raw_positions)
     ]
 
     return jsonify(shots)

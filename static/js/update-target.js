@@ -31,7 +31,7 @@ async function loadAndDrawShots() {
         */
 
     const svg = document.getElementById("target-svg");
-    const size = 20;
+    const size = 15;
     const thickness = 6;
 
     const baseColor = "255, 0, 0";
