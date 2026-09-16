@@ -5,7 +5,7 @@
 
 from flask import Blueprint, jsonify
 
-from database import database
+from database import database_rw
 
 api = Blueprint("api", __name__, template_folder="templates")
 
@@ -19,7 +19,7 @@ def hello_world():
 @api.route("/shots", methods=["GET"])
 def get_shots():
     # The shots are stocked in tuple in list [(x,y),(x,y)]
-    raw_positions = database.readShot(1779)
+    raw_positions = database_rw.readShot(1779)
 
     # Processing the tuple for js : [{ "x": -0.12, "y": 0.200, "number": 1 }, ...]
     shots = [
