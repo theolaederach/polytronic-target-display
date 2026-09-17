@@ -26,15 +26,16 @@ from io import StringIO
 
 from database.database_rw import InitTarget, targets
 
-HOST = "0.0.0.0"
-PORT = 4000
+port_str = os.getenv("PORT_LISTENER", "4000")
+PORT = int(port_str)
+
+HOST = os.getenv("URL_LISTENER", "0.0.0.0")
 
 numberOfTarget_str = os.getenv("NumberOfTarget", "5")
 numberOfTarget = int(numberOfTarget_str)
 
 for target in range(numberOfTarget):
-    targets.insert(target,InitTarget(target))
-
+    targets.insert(target, InitTarget(target))
 
 
 def listen(host: str = HOST, port: int = PORT) -> None:
@@ -66,7 +67,6 @@ def listen(host: str = HOST, port: int = PORT) -> None:
 
                         analyse_data(line)
 
-
         except KeyboardInterrupt:
             print("\nServer stopped by user.")
             sys.exit(0)
@@ -77,23 +77,23 @@ def analyse_data(data: str = "") -> None:
     row = next(reader)
     if row == []:
         return
-    dataType = row[0] # (_SHOT, _GRPH)
-    target_number = int(row[1]) # target number base 0
+    dataType = row[0]  # (_SHOT, _GRPH)
+    target_number = int(row[1])  # target number base 0
     shooter_number = int(row[3])
-    try :
+    try:
         time = row[6]
-    except IndexError :
+    except IndexError:
         time = ""
-        #print(row, IndexError)
+        # print(row, IndexError)
 
-    if (dataType == "_DIAG"):
+    if dataType == "_DIAG":
         # Begin of a programm
         # _DIAG;3;4;1839;60;5;12:09:13.00;11;0;0;2199066336
         guid = row[10]
 
         targets[target_number].start_programm(shooter_number, time, guid)
 
-    elif (dataType == "_GRPH"):
+    elif dataType == "_GRPH":
         # Begin of a serie
         # _GRPH;3;4;1839;60;101;12:26:52.69;8;0;0;1;0;0;1;2199172266
         series_type = int(row[9])
@@ -101,27 +101,25 @@ def analyse_data(data: str = "") -> None:
 
         targets[target_number].start_serie(series_type, time, guid)
 
-
-    elif (dataType == "_SUBT"):
+    elif dataType == "_SUBT":
         # Begin of a serie
         # _SUBT;3;4;1839;60;110;12:27:27.27;7;0;66;626;2199175750
 
         targets[target_number].serie_finish(time)
 
-    elif (dataType == "_PRST"):
+    elif dataType == "_PRST":
         # Begin of a serie
         # _SUBT;3;4;1839;60;110;12:27:27.27;7;0;66;626;2199175750
 
         targets[target_number].programm_finish()
 
-    elif (dataType == "_SHOT"):
+    elif dataType == "_SHOT":
         # record a shot
-        #_SHOT;3;4;1839;60;109;12:27:26.71;3;0;2048;8;74;0;8;0.11861770;0.06816363;900;0;0;655.35;2199175643;1;800;35
+        # _SHOT;3;4;1839;60;109;12:27:26.71;3;0;2048;8;74;0;8;0.11861770;0.06816363;900;0;0;655.35;2199175643;1;800;35
         pos_x = float(row[14])
         pos_y = float(row[15])
         score_10 = int(row[10])
         score_100 = int(row[11])
         guid = row[20]
 
-        targets[target_number].shot(pos_x, pos_y, score_10,
-            score_100, time , guid)
+        targets[target_number].shot(pos_x, pos_y, score_10, score_100, time, guid)
