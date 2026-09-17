@@ -86,7 +86,7 @@ def readShot(target_number: int) -> list[tuple[float, float]]:
             # Optionnel : loguer si besoin
             pass
 
-        return shots
+        return shots[::-1]
 
     except mariadb.Error as e:
         print(f"Erreur lecture DB (Cible {target_number}) : {e}")

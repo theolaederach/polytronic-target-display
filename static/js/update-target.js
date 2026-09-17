@@ -5,14 +5,14 @@
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const API_BASE_URL = "/api/shots";
-const REFRESH_INTERVAL = 1000; // 1 seconde
+const REFRESH_INTERVAL = 2000; // 1 seconde
 
 // Configuration graphique
 const CONFIG = {
   svgSize: 1024,
   targetSizeM: 1.0, // Taille réelle de la cible en mètres
-  crossSize: 15,    // Taille des bras de la croix
-  strokeWidth: 6,
+  crossSize: 22,    // Taille des bras de la croix
+  strokeWidth: 8,
   colors: {
     base: "255, 0, 0", // Rouge
     lastShot: "rgba(0, 170, 255, 1)", // Bleu pour le dernier tir
