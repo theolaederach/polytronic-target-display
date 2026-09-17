@@ -24,19 +24,17 @@ import socket
 import sys
 from io import StringIO
 
-from database.database_rw import InitTarget
+from database.database_rw import InitTarget, targets
 
 HOST = "0.0.0.0"
 PORT = 4000
 
-
 numberOfTarget_str = os.getenv("NumberOfTarget", "5")
 numberOfTarget = int(numberOfTarget_str)
 
-targets = []
-
 for target in range(numberOfTarget):
     targets.insert(target,InitTarget(target))
+
 
 
 def listen(host: str = HOST, port: int = PORT) -> None:
@@ -77,14 +75,16 @@ def listen(host: str = HOST, port: int = PORT) -> None:
 def analyse_data(data: str = "") -> None:
     reader = csv.reader(StringIO(data), delimiter=";")
     row = next(reader)
+    if row == []:
+        return
     dataType = row[0] # (_SHOT, _GRPH)
     target_number = int(row[1]) # target number base 0
     shooter_number = int(row[3])
     try :
         time = row[6]
-    except IndexError as e :
+    except IndexError :
         time = ""
-        #print(row, e)
+        #print(row, IndexError)
 
     if (dataType == "_DIAG"):
         # Begin of a programm

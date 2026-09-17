@@ -12,6 +12,9 @@ def home():
 def target():
     return render_template("target.html")
 
+@routes.route("/target/fullscreen")
+def target_fs():
+    return render_template("target_fs.html")
 
 @routes.route("/credits")
 def credits():

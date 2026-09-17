@@ -1,9 +1,11 @@
 # Title : Database
-# Author : Théo
-# Last update : 15.09.2026
-# Description : Module for read and manage the data from the database
+# Author : Théo (Refactored by Euria)
+# Last update : 17.09.2026
+# Description : Module for read and manage data from the database.
+#               Chaque opération ouvre sa propre connexion pour éviter les conflits (Commands out of sync).
 
 import os
+from typing import List, Optional, Tuple
 
 import mariadb
 from dotenv import load_dotenv
@@ -11,8 +13,6 @@ from dotenv import load_dotenv
 _ = load_dotenv()
 
 port_str = os.getenv("DATABASE_PORT", "3306")
-
-# la convertir en int
 port = int(port_str)
 
 db_config = {
@@ -21,159 +21,187 @@ db_config = {
     "user": os.getenv("DATABASE_USER"),
     "password": os.getenv("DATABASE_PASSWORD"),
     "database": os.getenv("DATABASE_NAME"),
+    "autocommit": False,  # On gère les commits manuellement pour les écritures
 }
 
-
-try:
-    print("Connecting to MariaDB...")
-    conn = mariadb.connect(**db_config)
-    print("Connection successful!")
-
-    cursor = conn.cursor()
-
-except mariadb.Error as e:
-    print("Something goes wrong with the database .", e)
+# Liste des targets (initialisée par le listener)
+targets = []
 
 
-def readShot(shooter: int) -> list[tuple[float, float]]:
-    select_query = "SELECT x, y FROM shots WHERE shooters_number LIKE ? LIMIT 10"
+def _get_connection() -> mariadb.Connection:
+    """Crée et retourne une nouvelle connexion à la base de données."""
+    try:
+        return mariadb.connect(**db_config)
+    except mariadb.Error as e:
+        print(f"Erreur de connexion à la base de données : {e}")
+        raise
 
-    cursor.execute(select_query, (f"%{shooter}%",))
 
+def readShot(target_number: int) -> list[tuple[float, float]]:
+    """Lit les tirs d'une cible spécifique de manière isolée."""
+
+    # Vérification de l'existence de la cible dans la liste globale
+    try:
+        current_guid = targets[target_number].current_serie_guid
+    except (IndexError, AttributeError):
+        print(f"Attention : Cible {target_number} non initialisée ou introuvable.")
+        return []
+
+    if not current_guid:
+        return []
+
+    conn = None
+    cursor = None
     shots: list[tuple[float, float]] = []
 
-    for row in cursor:
-        shots.append((row[0], row[1]))
+    try:
+        conn = _get_connection()
+        cursor = conn.cursor()
 
-    return shots
+        # 1. Récupérer les infos de la série
+        query_prog = "SELECT id, `show` FROM series WHERE GUID LIKE %s"
+        cursor.execute(query_prog, (current_guid,))
+        result_seri = cursor.fetchone()
+
+        if not result_seri:
+            # Pas critique, la série n'existe peut-être pas encore
+            return []
+
+        serie_id = int(result_seri[0])
+        showed = result_seri[1]
+
+        # Si la série est cachée (show=0), on ne renvoie rien
+        if showed == 0:
+            return []
+
+        # 2. Récupérer les tirs
+        select_query = "SELECT x, y FROM shots WHERE series_id = %s"
+        cursor.execute(select_query, (serie_id,))
+
+        # Itération complète pour consommer tous les résultats
+        for row in cursor:
+            shots.append((float(row[0]), float(row[1])))
+
+        if not shots:
+            # Optionnel : loguer si besoin
+            pass
+
+        return shots
+
+    except mariadb.Error as e:
+        print(f"Erreur lecture DB (Cible {target_number}) : {e}")
+        return []
+    except Exception as e:
+        print(f"Erreur inattendue lecture (Cible {target_number}) : {e}")
+        return []
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 class InitTarget:
     """
-    Initialisation of  target
-
-    Attributes
-    ----------
-    target_number : int
-        Identifier of the target being fired at.
-
-    Example
-    -------
-    >>> target = (1)
-
-    >>> target.start_programm(shooter_number=1723,
-    ...                     time="12:14:09.24", guid="2199094003")
-    >>> target.serie_begin(serie_type=1, time="12:14:09.24", guid="2199094003")
-    >>> target.shot(pos_x=-0.15586710, pos_y=0.04704675,
-                            score_10=7, score_100=69, guid="2199094003")
-    >>> target.serie_finish("12:14:09.24")
+    Gestionnaire d'état et d'écriture pour une cible spécifique.
+    Chaque méthode ouvre sa propre connexion pour garantir la sécurité en parallèle.
     """
 
     def __init__(self, target_number: int) -> None:
         self.target_number = target_number
-        self.temp_programm = None
-        self.temp_serie = None
+        self.current_programm_guid: str | None = None
+        self.current_serie_guid: str | None = None
+
+    def _execute_write(self, query: str, params: tuple) -> bool:
+        """Helper interne pour exécuter une requête d'écriture avec gestion d'erreur."""
+        conn = None
+        cursor = None
+        try:
+            conn = _get_connection()
+            cursor = conn.cursor()
+            cursor.execute(query, params)
+            conn.commit()
+            return True
+        except mariadb.IntegrityError as e:
+            print(f"Erreur d'intégrité (doublon ?) : {e}")
+            if conn:
+                conn.rollback()
+            return False
+        except mariadb.Error as e:
+            print(f"Erreur écriture DB : {e}")
+            if conn:
+                conn.rollback()
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
     def start_programm(self, shooter_number: int, time: str, guid: str) -> None:
-        """
-        Begin of a shooting programm to track the begin and
-        the end of a series.
-
-        Parameters
-        ----------
-        shooter_number : int
-            Identifier of the shooter.
-        time : str
-            time in HH:mm:ss.ms (e.g., "12:14:09.24").
-        guid : str
-            Universally‑unique identifier for the program.
-        """
-
-        self.temp_programm = guid
-
-        insert_query = (
-            "INSERT INTO programm (shooters_number, taget_number, start_time, GUID) VALUES (?, ?, ?, ?)"
+        self.current_programm_guid = guid
+        insert_query = "INSERT INTO programm (shooters_number, taget_number, start_time, GUID) VALUES (?, ?, ?, ?)"
+        self._execute_write(
+            insert_query, (shooter_number, self.target_number, time, guid)
         )
-        try:
-            cursor.execute(insert_query, (shooter_number,self.target_number, time, guid))
-            conn.commit()
-        except mariadb.IntegrityError as e:
-            print(f"Error inserting data in programm (might be duplicate GUID): {e}")
-            conn.rollback()
-        except mariadb.Error as e:
-            print(f"Error inserting data in programm: {e}")
-            conn.rollback()
 
     def start_serie(self, serie_type: int, time: str, guid: str) -> None:
-        """
-        Signal the start of a series. (_GRPH)
+        self.current_serie_guid = guid
 
-        Parameters
-        ----------
-        serie_type : int
-            Type code of the series (e.g., 0 = trial, 1= shot by shot,2 = hidden shots, ).
-        time : str
-            time in HH:mm:ss.ms (e.g., "12:14:09.24").
-        guid : str
-            Same program GUID – useful for logging or correlation.
-        """
+        conn = None
+        cursor = None
+        programm_id = None
 
-        self.temp_serie = guid
-        # 1. Correction du marqueur (%s au lieu de ?)
-        query = "SELECT id FROM programm WHERE GUID LIKE %s"
-        params = (f"%{self.temp_programm}%",)
-
-        cursor.execute(query, params)
-
-        # 2. Récupération du résultat
-        result = cursor.fetchone()
-
-        if result:
-            # Extraction de la valeur hors du tuple (ex: (123,) -> 123)
-            programm_id = result[0]
-        else:
-            print(f"Any programm found with the GUID : {self.temp_programm}")
-
-            programm_id = None
-
-        insert_query = "INSERT INTO series (programm_id, type, start_time, `show`, GUID) VALUES (?, ?, ?, ?, ?)"
         try:
-            cursor.execute(insert_query, (programm_id, serie_type, time, 0, guid))
+            conn = _get_connection()
+            cursor = conn.cursor()
+
+            # 1. Trouver l'ID du programme
+            query = "SELECT id FROM programm WHERE GUID LIKE %s"
+            cursor.execute(query, (f"%{self.current_programm_guid}%",))
+            result = cursor.fetchone()
+
+            if result:
+                programm_id = result[0]
+            else:
+                print(
+                    f"Aucun programme trouvé avec le GUID : {self.current_programm_guid}"
+                )
+
+            # 2. Préparer l'insertion
+            showed = 0 if serie_type == 2 else 1
+            insert_query = "INSERT INTO series (programm_id, type, start_time, `show`, GUID) VALUES (?, ?, ?, ?, ?)"
+
+            # On réutilise le même curseur/connexion car on est dans le même bloc try
+            cursor.execute(insert_query, (programm_id, serie_type, time, showed, guid))
             conn.commit()
+
         except mariadb.IntegrityError as e:
-            print(f"Error inserting data in series (might be duplicate GUID): {e}")
-            conn.rollback()
+            print(f"Erreur intégrité série : {e}")
+            if conn:
+                conn.rollback()
         except mariadb.Error as e:
-            print(f"Error inserting data in series: {e}")
-            conn.rollback()
+            print(f"Erreur écriture série : {e}")
+            if conn:
+                conn.rollback()
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
     def serie_finish(self, time: str) -> None:
-        """
-        Signal the end of the current series. (_SUBT)
-
-        Parameters
-        ----------
-        time : str
-             time in HH:mm:ss.ms (e.g., "12:14:09.24").
-        """
-
+        if not self.current_serie_guid:
+            return
         update_query = "UPDATE series SET end_time = ?, `show` = ? WHERE GUID = ?"
-        cursor.execute(update_query, (time, 1, self.temp_serie))
-        conn.commit()
+        self._execute_write(update_query, (time, 1, self.current_serie_guid))
 
     def programm_finish(self) -> None:
-        """
-        Signal the end of the current programm. (_PRST)
-
-        Parameters
-        ----------
-        time : str
-             time in HH:mm:ss.ms (e.g., "12:14:09.24").
-        """
-
+        if not self.current_programm_guid:
+            return
+        # Note: Vous aviez des valeurs en dur (10, 100), je les laisse mais vérifiez si c'est voulu
         update_query = "UPDATE programm SET total_final_base10 = ?, total_final_base100 = ? WHERE GUID = ?"
-        cursor.execute(update_query, (10, 100, self.temp_programm))
-        conn.commit()
+        self._execute_write(update_query, (10, 100, self.current_programm_guid))
 
     def shot(
         self,
@@ -184,44 +212,46 @@ class InitTarget:
         time: str,
         guid: str,
     ) -> None:
-        """
-        Record a single shot.
+        if not self.current_serie_guid:
+            print("Erreur: Tentative d'ajout de tir sans série active.")
+            return
 
-        Parameters
-        ----------
-        pos_x, pos_y : float
-            Coordinate in put impact on the target
-        score_10 : int
-            Score out of 10 .
-        score_100 : int
-            Score out of 100.
-        guid : str
-            Same program GUID – for traceability.
-        """
+        conn = None
+        cursor = None
+        series_id = None
 
-        query = "SELECT id FROM series WHERE GUID LIKE %s"
-        params = (f"%{self.temp_serie}%",)
-
-        cursor.execute(query, params)
-
-        result = cursor.fetchone()
-
-        if result:
-            # Extract of the value (ex: (123,) -> 123)
-            series_id = result[0]
-        else:
-            print(f"Any series found with the GUID : {self.temp_serie}")
-            series_id = None
-
-        insert_query = "INSERT INTO shots (x, y, time, score_base10, score_base100, series_id, GUID) VALUES (?, ?, ?, ?, ?, ?, ?)"
         try:
+            conn = _get_connection()
+            cursor = conn.cursor()
+
+            # 1. Trouver l'ID de la série
+            query = "SELECT id FROM series WHERE GUID LIKE %s"
+            cursor.execute(query, (f"%{self.current_serie_guid}%",))
+            result = cursor.fetchone()
+
+            if result:
+                series_id = result[0]
+            else:
+                print(f"Aucune série trouvée avec le GUID : {self.current_serie_guid}")
+                return
+
+            # 2. Insérer le tir
+            insert_query = "INSERT INTO shots (x, y, time, score_base10, score_base100, series_id, GUID) VALUES (?, ?, ?, ?, ?, ?, ?)"
             cursor.execute(
                 insert_query, (pos_x, pos_y, time, score_10, score_100, series_id, guid)
             )
             conn.commit()
+
         except mariadb.IntegrityError as e:
-            print(f"Error inserting data in shots (might be duplicate GUID): {e}")
-            conn.rollback()
+            print(f"Erreur intégrité tir : {e}")
+            if conn:
+                conn.rollback()
         except mariadb.Error as e:
-            print(f"Error inserting data in shots (GUID : {guid}, x : {pos_x}, y={pos_y}): {e}")
-            conn.rollback()
+            print(f"Erreur écriture tir : {e}")
+            if conn:
+                conn.rollback()
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()

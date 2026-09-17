@@ -1,6 +1,6 @@
 .env
 
-test.py
+test.*
 
 assets/*
 !assets/template.png
