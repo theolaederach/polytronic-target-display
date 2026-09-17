@@ -36,4 +36,4 @@ if __name__ == "__main__":
         f"[INFO] Listener TCP démarré sur {listen_ip}:{listen_port} (thread {receiver_thread.name})"
     )
 
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)

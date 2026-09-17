@@ -84,7 +84,7 @@ def analyse_data(data: str = "") -> None:
         time = row[6]
     except IndexError as e :
         time = ""
-        print(row, e)
+        #print(row, e)
 
     if (dataType == "_DIAG"):
         # Begin of a programm
@@ -112,13 +112,13 @@ def analyse_data(data: str = "") -> None:
         # Begin of a serie
         # _SUBT;3;4;1839;60;110;12:27:27.27;7;0;66;626;2199175750
 
-        targets[target_number].programm_finish(time)
+        targets[target_number].programm_finish()
 
     elif (dataType == "_SHOT"):
         # record a shot
         #_SHOT;3;4;1839;60;109;12:27:26.71;3;0;2048;8;74;0;8;0.11861770;0.06816363;900;0;0;655.35;2199175643;1;800;35
-        pos_x = float(row[13])
-        pos_y = float(row[14])
+        pos_x = float(row[14])
+        pos_y = float(row[15])
         score_10 = int(row[10])
         score_100 = int(row[11])
         guid = row[20]
