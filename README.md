@@ -1,11 +1,117 @@
-# Projet-cible
+# polytronic‑target‑display
 
-# How to use
+## Quick start
 
-1. Clone the repository `git clone https://github.com/theolaederach/Projet-cible.git`
-2. Install the dependencies `pip install -r requirements.txt`
-3. Run the  `python main.py`
+The project visualises live target‑shooting data received over a TCP socket. Data packets are parsed, stored in a MariaDB database, and served via a lightweight Flask API that a vanilla‑JS front‑end consumes.
 
-made by [theolaederach](https://github.com/theolaederach)
+---
 
-> next is comming soon...
+## Prerequisites
+
+| Item        | Minimum       | Notes                                            |
+| ----------- | ------------- | ------------------------------------------------ |
+| **Python**  | 3.11 or newer | The project is written in pure Python.           |
+| **pip**     | –             | Python’s package manager.                        |
+| **MariaDB** | 10.5+         | Any server compatible with the `mariadb` driver. |
+
+---
+
+## Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/theolaederach/polytronic-target-display
+cd polytronic-target-display
+
+# 2. Create a virtual environment (recommended)
+python -m venv .venv
+source .venv/bin/activate   # On Windows: .venv\Scripts\activate
+
+# 3. Install Python dependencies
+pip install -r requirements.txt
+```
+
+### Database setup
+
+```bash
+# Create the database and run the schema
+# Replace <user> and <db_name> with your credentials
+mysql -u <user> -p <db_name> < database/create_structure.sql
+```
+
+The SQL script creates the tables `programm`, `series`, and `shots`.
+
+### Environment variables
+
+Copy the example file and edit it with your own values:
+
+```bash
+cp .env.example .env
+```
+
+Required variables:
+
+| Variable            | Description                                   |
+| ------------------- | --------------------------------------------- |
+| `DATABASE_URL`      | Hostname or IP of the MariaDB server          |
+| `DATABASE_PORT`     | DB port (default 3306)                        |
+| `DATABASE_USER`     | DB user                                       |
+| `DATABASE_PASSWORD` | DB password                                   |
+| `DATABASE_NAME`     | DB name                                       |
+| `URL_LISTENER`      | IP to bind the TCP listener (e.g. `0.0.0.0`)  |
+| `PORT_LISTENER`     | Port for the TCP listener (default `4000`)    |
+| `NumberOfTarget`    | Number of targets to initialise (default `5`) |
+
+---
+
+## Running the application
+
+```bash
+# With the virtual environment activated
+python app.py
+```
+
+- `app.py` starts a Flask web server (default on port 5000) **and** launches a background thread that listens on the TCP port defined by `PORT_LISTENER`.
+- The front‑end is served at `http://localhost:5000/` and automatically polls the API for shot data.
+
+### Stopping
+
+Press `Ctrl+C` in the terminal that ran `app.py` – both the Flask server and the TCP listener will terminate.
+
+---
+
+## Project layout
+
+```
+polytronic-target-display/
+├─ app.py                 # Bootstrap – Flask + TCP listener
+├─ app_api.py             # REST API (shots endpoint)
+├─ app_routes.py          # HTML routes
+├─ database/
+│  ├─ __init__.py
+│  ├─ receiver.py         # TCP listener and parser
+│  ├─ database_rw.py      # DB CRUD helpers & InitTarget
+│  └─ create_structure.sql
+├─ static/
+│  ├─ js/update-target.js
+│  ├─ style.css
+│  └─ …
+├─ templates/
+│  ├─ home.html
+│  ├─ target.html
+│  └─ …
+├─ requirements.txt
+├─ .env.example
+├─ README.md
+└─ doc.md
+```
+
+---
+
+## Contribution
+
+Feel free to fork, create feature branches, and submit pull requests. Please keep the coding style consistent with the existing code (PEP‑8 for Python, camelCase for JS). Adding tests is appreciated.
+
+---
+
+> Made by [theolaederach](https://github.com/theolaederach) – co‑authored with AI.
