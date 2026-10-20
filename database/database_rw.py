@@ -5,7 +5,6 @@
 #               Chaque opération ouvre sa propre connexion pour éviter les conflits (Commands out of sync).
 
 import os
-from typing import List, Optional, Tuple
 
 import mariadb
 from dotenv import load_dotenv
