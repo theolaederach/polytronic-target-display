@@ -3,10 +3,11 @@ This file only call the read function, like readShots
 """
 
 import mariadb
-from connection import _get_connection, targets
+
+from database.connection import _get_connection, targets
 
 
-def readShot(target_number: int) -> list[tuple[float, float, int]]:
+def listLastShot(target_number: int) -> list[tuple[float, float, int]]:
     """Lit les tirs d'une cible spécifique de manière isolée."""
 
     # Vérification de l'existence de la cible dans la liste globale
@@ -51,10 +52,6 @@ def readShot(target_number: int) -> list[tuple[float, float, int]]:
         for row in cursor:
             shots.append((float(row[0]), float(row[1]), int(row[2])))
 
-        if not shots:
-            # Optionnel : loguer si besoin
-            pass
-
         return shots[::-1]
 
     except mariadb.Error as e:
@@ -62,6 +59,68 @@ def readShot(target_number: int) -> list[tuple[float, float, int]]:
         return []
     except Exception as e:
         print(f"Erreur inattendue lecture (Cible {target_number}) : {e}")
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+def listScore(guid: str, type: str, max: int = 10) -> list[int]:
+    """
+    this function return all the shots's scrores of a series.
+    you can only user guid or target_number, not both of theme.
+
+    Args:
+        guid (str): the guid of the series/programm
+        type (str): shots/series
+        max (int): max of the scores. 10/100 is the only value aviable
+    """
+
+    conn = None
+    cursor = None
+    scores: list[int] = []
+
+    if type == "shots":
+        parent_type = "series"
+        child_type = "shots"
+    if type == "series":
+        parent_type = "programm"
+        child_type = "series"
+    else:
+        raise ValueError("Only the type shots or series are aviable.")
+
+    if max == 10:
+        shot_col = "score_base10"
+    if max == 100:
+        shot_col = "score_base100"
+    else:
+        raise ValueError("the max can only be 10 or 100.")
+
+    try:
+        conn = _get_connection()
+        cursor = conn.cursor()
+
+        # select_query = "SELECT sh.score_base100 FROM shots sh inner join series se on se.id = sh.series_id WHERE se.GUID = %s;"
+        # request to get the lists of scores of the shots/series
+        select_query = (
+            f"SELECT child.{shot_col} FROM {child_type} child"
+            f"inner join {parent_type} parent on parent.id = child.{parent_type}_id"
+            f"WHERE parent.GUID = %s;"
+        )
+        cursor.execute(select_query, (guid,))
+
+        for row in cursor:
+            scores.append(int(row[0]))
+
+        return scores[::-1]
+
+    except mariadb.Error as e:
+        print(f"Erreur lecture DB (serie guid : {guid}) : {e}")
+        return []
+    except Exception as e:
+        print(f"Erreur inattendue lecture (Cible {guid}) : {e}")
         raise
     finally:
         if cursor:
