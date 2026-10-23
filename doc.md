@@ -182,6 +182,7 @@ Parses a CSV line received on the TCP socket, determines the data type (`_SHOT`,
 Flask view that extracts the `target` query param, calls `readShot`, and formats the result for the front‑end.
 
 ---
+
 <!--
 ## 7. Extending & Debugging
 
@@ -194,15 +195,17 @@ Flask view that extracts the `target` query param, calls `readShot`, and formats
 | **Dockerise**                | Create a `Dockerfile` that installs dependencies and runs `python app.py`.                                              |
 
 ---
+-->
 
 ## 8. Roadmap (as of Oct 2026)
 
-- [ ] Add authentication to API endpoints.
-- [ ] Implement caching for shot data to reduce DB load.
-- [ ] Add a front‑end UI for configuring targets and viewing logs.
-- [ ] Create automated tests for DB layer.
-- [ ] Deploy to a container platform (Docker/Kubernetes).
+- [x] Register the shots into the database.
+- [x] Display the shots on the target.
+- [ ] Automatically change the taget type on the web UI
+- [ ] Add a score table
+- [ ] Add a diaporama of the sponsors
+- [ ] add graphics for every shooters and global statisticals
 
 ---
--->
+
 _For any questions or further details, refer to the source code or contact the project maintainer._
