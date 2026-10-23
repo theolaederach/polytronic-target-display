@@ -14,7 +14,7 @@ api = Blueprint("api", __name__, template_folder="templates")
 def get_shots():
     target = request.args.get("target")
     if target:
-        raw_data = reader.readShot(int(target) - 1)
+        raw_data = reader.listLastShot(int(target) - 1)
     else:
         return {"message": "ERROR, no target number", "target": target}, 400
 
