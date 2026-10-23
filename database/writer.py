@@ -1,6 +1,6 @@
-
 import mariadb
-from connection import _get_connection
+
+from database.connection import _get_connection
 
 
 class InitTarget:
@@ -93,17 +93,30 @@ class InitTarget:
                 conn.close()
 
     def serie_finish(self, time: str) -> None:
+        from database.reader import listScore
+
         if not self.current_serie_guid:
             return
-        update_query = "UPDATE series SET end_time = ?, `show` = ? WHERE GUID = ?"
-        self._execute_write(update_query, (time, 1, self.current_serie_guid))
+        update_query = "UPDATE series SET `show` = ?, score_base10 = ?, score_base100 = ?, end_time = ? WHERE GUID = ?"
+        score_base10 = sum(listScore(self.current_serie_guid, "shots", max=10))
+        score_base100 = sum(listScore(self.current_serie_guid, "shots", max=100))
+        self._execute_write(
+            update_query,
+            (1, score_base10, score_base100, time, self.current_serie_guid),
+        )
 
-    def programm_finish(self) -> None:
+    def programm_finish(self, time: str) -> None:
+        from database.reader import listScore
+
         if not self.current_programm_guid:
             return
-        # Note: Vous aviez des valeurs en dur (10, 100), je les laisse mais vérifiez si c'est voulu
-        update_query = "UPDATE programm SET total_final_base10 = ?, total_final_base100 = ? WHERE GUID = ?"
-        self._execute_write(update_query, (10, 100, self.current_programm_guid))
+        score_base10 = sum(listScore(self.current_programm_guid, "series", max=10))
+        score_base100 = sum(listScore(self.current_programm_guid, "series", max=100))
+        update_query = "UPDATE programm SET score_base10 = ?, score_base100 = ?, end_time = ? WHERE GUID = ?"
+        self._execute_write(
+            update_query,
+            (score_base10, score_base100, time, self.current_programm_guid),
+        )
 
     def shot(
         self,

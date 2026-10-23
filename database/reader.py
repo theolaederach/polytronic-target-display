@@ -85,7 +85,7 @@ def listScore(guid: str, type: str, max: int = 10) -> list[int]:
     if type == "shots":
         parent_type = "series"
         child_type = "shots"
-    if type == "series":
+    elif type == "series":
         parent_type = "programm"
         child_type = "series"
     else:
@@ -93,7 +93,7 @@ def listScore(guid: str, type: str, max: int = 10) -> list[int]:
 
     if max == 10:
         shot_col = "score_base10"
-    if max == 100:
+    elif max == 100:
         shot_col = "score_base100"
     else:
         raise ValueError("the max can only be 10 or 100.")
@@ -105,20 +105,23 @@ def listScore(guid: str, type: str, max: int = 10) -> list[int]:
         # select_query = "SELECT sh.score_base100 FROM shots sh inner join series se on se.id = sh.series_id WHERE se.GUID = %s;"
         # request to get the lists of scores of the shots/series
         select_query = (
-            f"SELECT child.{shot_col} FROM {child_type} child"
-            f"inner join {parent_type} parent on parent.id = child.{parent_type}_id"
+            f"SELECT child.{shot_col} FROM {child_type} child "
+            f"inner join {parent_type} parent on parent.id = child.{parent_type}_id "
             f"WHERE parent.GUID = %s;"
         )
         cursor.execute(select_query, (guid,))
 
         for row in cursor:
-            scores.append(int(row[0]))
+            if row[0] is not None:
+                scores.append(int(row[0]))
+            else:
+                scores.append(0)
 
         return scores[::-1]
 
     except mariadb.Error as e:
         print(f"Erreur lecture DB (serie guid : {guid}) : {e}")
-        return []
+        return [0]
     except Exception as e:
         print(f"Erreur inattendue lecture (Cible {guid}) : {e}")
         raise

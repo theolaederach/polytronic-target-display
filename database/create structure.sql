@@ -25,8 +25,8 @@ DROP TABLE IF EXISTS `polytronic-target-display`.`programm` ;
 
 CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`programm` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `total_final_base10` INT(10) NULL,
-  `total_final_base100` INT(100) NULL,
+  `score_base10` SMALLINT  UNSIGNED NULL,
+  `score_base100` SMALLINT  UNSIGNED NULL,
   `taget_number` TINYINT NOT NULL,
   `shooters_number` INT NULL,
   `target_type` VARCHAR(4) NULL,
@@ -45,8 +45,8 @@ DROP TABLE IF EXISTS `polytronic-target-display`.`series` ;
 
 CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`series` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `subtot_base10` TINYINT(10) NULL,
-  `subtot_base100` TINYINT(100) NULL,
+  `score_base10` SMALLINT  UNSIGNED NULL,
+  `score_base100` SMALLINT  UNSIGNED NULL,
   `programm_id` INT NOT NULL,
   `type` INT(3) NOT NULL,
   `show` TINYINT(1) NOT NULL,

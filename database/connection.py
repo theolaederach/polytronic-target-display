@@ -1,8 +1,7 @@
 # Title : Database
 # Author : Théo (Refactored by Euria)
 # Last update : 17.09.2026
-# Description : Module for read and manage data from the database.
-#               Chaque opération ouvre sa propre connexion pour éviter les conflits (Commands out of sync).
+# Description : Module for open the connection to the database.
 
 import os
 
@@ -20,15 +19,15 @@ db_config = {
     "user": os.getenv("DATABASE_USER"),
     "password": os.getenv("DATABASE_PASSWORD"),
     "database": os.getenv("DATABASE_NAME"),
-    "autocommit": False,  # On gère les commits manuellement pour les écritures
+    "autocommit": False, # commit are gered manualy
 }
 
-# Liste des targets (initialisée par le listener)
+# List of targets (init by the listener)
 targets = []
 
 
 def _get_connection() -> mariadb.Connection:
-    """Crée et retourne une nouvelle connexion à la base de données."""
+    """Create and return a new connection to the mariadb database"""
     try:
         return mariadb.connect(**db_config)
     except mariadb.Error as e:

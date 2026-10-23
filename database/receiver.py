@@ -22,10 +22,11 @@ import csv
 import os
 import socket
 import sys
+from datetime import datetime
 from io import StringIO
 
-from connection import targets
-from writer import InitTarget
+from database.connection import targets
+from database.writer import InitTarget
 
 port_str = os.getenv("PORT_LISTENER", "4000")
 PORT = int(port_str)
@@ -103,16 +104,15 @@ def analyse_data(data: str = "") -> None:
         targets[target_number].start_serie(series_type, time, guid)
 
     elif dataType == "_SUBT":
-        # Begin of a serie
+        # End of a serie
         # _SUBT;3;4;1839;60;110;12:27:27.27;7;0;66;626;2199175750
 
         targets[target_number].serie_finish(time)
 
     elif dataType == "_PRST":
-        # Begin of a serie
-        # _SUBT;3;4;1839;60;110;12:27:27.27;7;0;66;626;2199175750
-
-        targets[target_number].programm_finish()
+        # End of a programm
+        # _PRST;3;4;1839;51;0
+        targets[target_number].programm_finish(datetime.now().strftime("%H:%M:%S.%f"))
 
     elif dataType == "_SHOT":
         # record a shot
