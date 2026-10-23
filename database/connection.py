@@ -1,0 +1,38 @@
+# Title : Database
+# Author : Théo (Refactored by Euria)
+# Last update : 17.09.2026
+# Description : Module for read and manage data from the database.
+#               Chaque opération ouvre sa propre connexion pour éviter les conflits (Commands out of sync).
+
+import os
+
+import mariadb
+from dotenv import load_dotenv
+
+_ = load_dotenv()
+
+port_str = os.getenv("DATABASE_PORT", "3306")
+port = int(port_str)
+
+db_config = {
+    "host": os.getenv("DATABASE_URL"),
+    "port": port,
+    "user": os.getenv("DATABASE_USER"),
+    "password": os.getenv("DATABASE_PASSWORD"),
+    "database": os.getenv("DATABASE_NAME"),
+    "autocommit": False,  # On gère les commits manuellement pour les écritures
+}
+
+# Liste des targets (initialisée par le listener)
+targets = []
+
+
+def _get_connection() -> mariadb.Connection:
+    """Crée et retourne une nouvelle connexion à la base de données."""
+    try:
+        return mariadb.connect(**db_config)
+    except mariadb.Error as e:
+        print(f"Erreur de connexion à la base de données : {e}")
+        raise
+
+

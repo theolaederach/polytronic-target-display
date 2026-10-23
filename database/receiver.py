@@ -24,7 +24,8 @@ import socket
 import sys
 from io import StringIO
 
-from database.database_rw import InitTarget, targets
+from connection import targets
+from write import InitTarget
 
 port_str = os.getenv("PORT_LISTENER", "4000")
 PORT = int(port_str)
