@@ -25,7 +25,7 @@ import sys
 from io import StringIO
 
 from connection import targets
-from write import InitTarget
+from writer import InitTarget
 
 port_str = os.getenv("PORT_LISTENER", "4000")
 PORT = int(port_str)

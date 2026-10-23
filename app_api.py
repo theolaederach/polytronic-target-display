@@ -5,7 +5,7 @@
 
 from flask import Blueprint, jsonify, request
 
-from database import read
+from database import reader
 
 api = Blueprint("api", __name__, template_folder="templates")
 
@@ -14,7 +14,7 @@ api = Blueprint("api", __name__, template_folder="templates")
 def get_shots():
     target = request.args.get("target")
     if target:
-        raw_data = read.readShot(int(target) - 1)
+        raw_data = reader.readShot(int(target) - 1)
     else:
         return {"message": "ERROR, no target number", "target": target}, 400
 
