@@ -59,7 +59,7 @@ class InitTarget:
             cursor = conn.cursor()
 
             # 1. Trouver l'ID du programme
-            query = "SELECT id FROM programm WHERE GUID LIKE %s"
+            query = "SELECT id FROM programm WHERE GUID LIKE ?"
             cursor.execute(query, (f"%{self.current_programm_guid}%",))
             result = cursor.fetchone()
 
@@ -140,7 +140,7 @@ class InitTarget:
             cursor = conn.cursor()
 
             # 1. Trouver l'ID de la série
-            query = "SELECT id FROM series WHERE GUID LIKE %s"
+            query = "SELECT id FROM series WHERE GUID LIKE ?"
             cursor.execute(query, (f"%{self.current_serie_guid}%",))
             result = cursor.fetchone()
 
@@ -170,3 +170,7 @@ class InitTarget:
                 cursor.close()
             if conn:
                 conn.close()
+
+
+# List of targets
+targets: list[InitTarget] = []

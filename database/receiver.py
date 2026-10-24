@@ -25,8 +25,7 @@ import sys
 from datetime import datetime
 from io import StringIO
 
-from database.connection import targets
-from database.writer import InitTarget
+from database.writer import InitTarget, targets
 
 port_str = os.getenv("PORT_LISTENER", "4000")
 PORT = int(port_str)
