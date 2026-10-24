@@ -42,9 +42,9 @@ class InitTarget:
 
     def start_programm(self, shooter_number: int, time: str, guid: str) -> None:
         self.current_programm_guid = guid
-        insert_query = "INSERT INTO programm (shooters_number, taget_number, start_time, GUID) VALUES (?, ?, ?, ?)"
+        insert_query = "INSERT INTO programm (shooters_number, taget_number,target_type, start_time, GUID) VALUES (?, ?, ?, ?)"
         self._execute_write(
-            insert_query, (shooter_number, self.target_number, time, guid)
+            insert_query, (shooter_number, self.target_number, "A10", time, guid)
         )
 
     def start_serie(self, serie_type: int, time: str, guid: str) -> None:

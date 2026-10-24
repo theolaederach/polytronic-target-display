@@ -8,6 +8,8 @@ import os
 import mariadb
 from dotenv import load_dotenv
 
+from database.writer import InitTarget
+
 _ = load_dotenv()
 
 port_str = os.getenv("DATABASE_PORT", "3306")
@@ -19,11 +21,11 @@ db_config = {
     "user": os.getenv("DATABASE_USER"),
     "password": os.getenv("DATABASE_PASSWORD"),
     "database": os.getenv("DATABASE_NAME"),
-    "autocommit": False, # commit are gered manualy
+    "autocommit": False,  # commit are gered manualy
 }
 
 # List of targets (init by the listener)
-targets = []
+targets: list[InitTarget] = []
 
 
 def _get_connection() -> mariadb.Connection:
@@ -33,5 +35,3 @@ def _get_connection() -> mariadb.Connection:
     except mariadb.Error as e:
         print(f"Erreur de connexion à la base de données : {e}")
         raise
-
-
