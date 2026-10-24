@@ -11,13 +11,13 @@ const REFRESH_INTERVAL = 2000; // 1 seconde
 const CONFIG = {
   svgSize: 1024,
   targetSizeM: 1.0, // Taille réelle de la cible en mètres
-  crossSize: 22,    // Taille des bras de la croix
+  crossSize: 22, // Taille des bras de la croix
   strokeWidth: 8,
   colors: {
     base: "255, 0, 0", // Rouge
     lastShot: "rgba(0, 170, 255, 1)", // Bleu pour le dernier tir
-    minOpacity: 0.40
-  }
+    minOpacity: 0.4,
+  },
 };
 
 /**
@@ -29,7 +29,7 @@ function metersToSvg(xMeters, yMeters) {
 
   return {
     x: center + xMeters * scale,
-    y: center - yMeters * scale // Inversion de l'axe Y
+    y: center - yMeters * scale, // Inversion de l'axe Y
   };
 }
 
@@ -40,8 +40,10 @@ function clearSvg(svgElement) {
   if (!svgElement) return;
   // On sélectionne tous les éléments créés par le script (lines et texts)
   // On peut utiliser une classe ou simplement supprimer tout ce qui n'est pas l'image de fond
-  const elementsToRemove = svgElement.querySelectorAll("line, text.shot-number");
-  elementsToRemove.forEach(el => el.remove());
+  const elementsToRemove = svgElement.querySelectorAll(
+    "line, text.shot-number",
+  );
+  elementsToRemove.forEach((el) => el.remove());
 }
 
 /**
@@ -65,8 +67,9 @@ function drawShotsOnSvg(svgElement, shots) {
     if (index === 0) {
       color = CONFIG.colors.lastShot;
     } else {
-      let opacity = 1.0 - (index * 0.1); // Réduit l'opacité de 10% par tir ancien
-      if (opacity < CONFIG.colors.minOpacity) opacity = CONFIG.colors.minOpacity;
+      let opacity = 1.0 - index * 0.1; // Réduit l'opacité de 10% par tir ancien
+      if (opacity < CONFIG.colors.minOpacity)
+        opacity = CONFIG.colors.minOpacity;
       color = `rgba(${CONFIG.colors.base}, ${opacity})`;
     }
 
@@ -119,24 +122,36 @@ async function updateTarget(targetId, svgElement) {
     const response = await fetch(url, {
       method: "GET",
       headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      }
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
     });
 
     if (!response.ok) {
       // Si l'API renvoie une erreur (ex: 404), on nettoie juste et on arrête pour cette cible
       if (response.status !== 404) {
-        console.warn(`Erreur API pour la cible ${targetId}: ${response.status}`);
+        console.warn(
+          `Erreur API pour la cible ${targetId}: ${response.status}`,
+        );
       }
       return;
     }
 
-    const shots = await response.json();
+    const target_info = await response.json();
+    shots = target_info.shots;
     drawShotsOnSvg(svgElement, shots);
-
+    if (shots && shots.length > 0) {
+      const targetType = target_info.target_type;
+      const image = svgElement.querySelector("image");
+      if (image) {
+        image.setAttribute("href", `/static/assets/target_${targetType}.png`);
+      }
+    }
   } catch (error) {
-    console.error(`Erreur lors de la mise à jour de la cible ${targetId} :`, error);
+    console.error(
+      `Erreur lors de la mise à jour de la cible ${targetId} :`,
+      error,
+    );
   }
 }
 
@@ -152,10 +167,10 @@ function refreshAllTargets() {
     { id: "3", selector: ".target3" },
     { id: "4", selector: ".target4" },
     { id: "5", selector: ".target5" },
-    { id: "other", selector: ".other" }
+    { id: "other", selector: ".other" },
   ];
 
-  targetSelectors.forEach(item => {
+  targetSelectors.forEach((item) => {
     const container = document.querySelector(item.selector);
     if (container) {
       // On cherche le SVG à l'intérieur de ce conteneur
@@ -177,5 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Puis rafraîchissement toutes les secondes
   setInterval(refreshAllTargets, REFRESH_INTERVAL);
 
-  console.log("Système de mise à jour des cibles démarré (1s interval)");
+  console.log(
+    `Système de mise à jour des cibles démarré (${REFRESH_INTERVAL}s interval)`,
+  );
 });

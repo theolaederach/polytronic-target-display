@@ -10,14 +10,14 @@ def listLastShot(target_number: int) -> list[tuple[float, float, int]]:
     """
     Reads the shots of a series of a single taget
 
-    
+    (to do later, i'm too busy now)
     """
 
     # Checking Whether the Target Exists in the Global List
     try:
         current_guid = targets[target_number].current_serie_guid
     except (IndexError, AttributeError):
-        print(f"Attention : Cible {target_number} non initialisée ou introuvable.")
+        print(f"Waring : Target {target_number} uninitialised or not found.")
         return []
 
     if not current_guid:
@@ -117,3 +117,44 @@ def getShooterNumber(target_number: int) -> int | None:
         return shooter_number
     else:
         return None
+
+
+def getScoreSeriesOnTarget(target_number: int) -> int | None:
+    """
+    Function description :
+    To do later too, i'm still too busy
+    """
+    try:
+        serie_guid = targets[target_number].current_serie_guid
+    except (IndexError, AttributeError):
+        print(f"Waring : Target {target_number} uninitialised or not found.")
+        return None
+
+    if not serie_guid:
+        return None
+
+    return sum(listScore(serie_guid, "shots", 10))
+
+
+def getTargetType(target_number: int) -> str:
+    """
+    Function description :
+    To do later too, i'm still too busy
+    """
+    try:
+        programm_guid = targets[target_number].current_programm_guid
+    except (IndexError, AttributeError):
+        print(f"Waring : Target {target_number} uninitialised or not found.")
+        return "A10"
+
+    if not programm_guid:
+        return "A10"
+
+    request = "SELECT p.target_type FROM programm p WHERE p.GUID = ?;"
+    reponse = execute_request(request, (programm_guid,))
+
+    if reponse:
+        target_type = reponse[0][0]
+        return target_type
+    else:
+        return "A10"
