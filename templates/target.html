@@ -13,7 +13,7 @@
         />
         <title>Target Display | Target</title>
     </head>
-    <body>
+    <body class="target-page">
         <nav>
             <ul>
                 <li>
@@ -28,9 +28,9 @@
         <div class="content parent">
             <h1>Target Display</h1>
 
-            <div class="target-container container element">
+            <div class="target-container">
                 <!-- Target 1 : Ajoutez la classe "target1" -->
-                <div class="target-container container element target1">
+                <div class="container element target1">
                     <h2>Target 1</h2>
                     <svg id="svg-target1" viewBox="0 0 1024 1024">
                         <image href="{{ url_for('static', filename='assets/target_A10.png') }}" width="1024" height="1024" />
@@ -38,7 +38,7 @@
                 </div>
 
                 <!-- Target 2 : Ajoutez la classe "target2" -->
-                <div class="target-container container element target2">
+                <div class="container element target2">
                     <h2>Target 2</h2>
                     <svg id="svg-target2" viewBox="0 0 1024 1024">
                         <image href="{{ url_for('static', filename='assets/target_A10.png') }}" width="1024" height="1024" />
@@ -46,7 +46,7 @@
                 </div>
 
                 <!-- Target 3 : Ajoutez la classe "target3" -->
-                <div class="target-container container element target3">
+                <div class="container element target3">
                     <h2>Target 3</h2>
                     <svg id="svg-target3" viewBox="0 0 1024 1024">
                         <image href="{{ url_for('static', filename='assets/target_A10.png') }}" width="1024" height="1024" />
@@ -54,7 +54,7 @@
                 </div>
 
                 <!-- Target 4 : Ajoutez la classe "target4" -->
-                <div class="target-container container element target4">
+                <div class="container element target4">
                     <h2>Target 4</h2>
                     <svg id="svg-target4" viewBox="0 0 1024 1024">
                         <image href="{{ url_for('static', filename='assets/target_A10.png') }}" width="1024" height="1024" />
@@ -62,13 +62,14 @@
                 </div>
 
                 <!-- Target 5 : Ajoutez la classe "target5" -->
-                <div class="target-container container element target5">
+                <div class="container element target5">
                     <h2>Target 5</h2>
                     <svg id="svg-target5" viewBox="0 0 1024 1024">
                         <image href="{{ url_for('static', filename='assets/target_A10.png') }}" width="1024" height="1024" />
                     </svg>
                 </div>
 
+            </div>
         </div>
         <script src="{{ url_for('static', filename='js/update-target.js') }}"></script>
 
