@@ -53,6 +53,10 @@ polytronic-target-display/               # racine
 - **`get_data`** : simplification de la gestion des ressources grâce à un seul bloc `with` contenant la connexion et le curseur. La logique de détection du SELECT repose désormais sur `cursor.description` (au lieu de l’attribut interne `cursor._text`).
 - **Images de cible** : les balises `<image>` dans `templates/target.html` et `templates/target_fs.html` pointent maintenant vers `/static/assets/{{ target_type }}.png` via le script JavaScript, permettant un changement d’image dynamique.
 - **`update-target.js`** : après mise à jour de l’image, la fonction `drawShotsOnSvg` est appelée pour dessiner les tirs, garantissant que l’affichage reste synchronisé avec l’image.
+- **`writer.py`** :
+  - Docstring de la fonction interne `doWriteQuery` traduite en anglais.
+  - Commentaires internes (lignes 8‑9 et 13‑13) traduits en anglais pour la cohérence.
+  - Le `fetchone()` est appelé avant le `commit()`, ce qui fonctionne correctement car `LAST_INSERT_ID()` reste disponible jusqu’à la prochaine requête `INSERT`.
 
 ## 3. Conventions de code et règles
 
