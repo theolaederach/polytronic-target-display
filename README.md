@@ -88,7 +88,7 @@ Press `Ctrl+C` in the terminal that ran `app.py` – both the Flask server and t
 - [ ] Make the home page of the website
 - [ ] Create an auto-install script
 - [ ] Make the web server and the listener independant
-- [ ] change the guid by the id of the shots/series/programm and add a table of the curreent shots/series/programm for each target.
+- [x] change the guid by the id of the shots/series/programm and add a table of the curreent shots/series/programm for each target.
 
 ---
 
