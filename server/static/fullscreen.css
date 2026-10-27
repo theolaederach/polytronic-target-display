@@ -1,0 +1,81 @@
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background-color: #4a4a4a;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+.parent {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: stretch;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    gap: 10px;
+    padding: 15px;
+}
+
+.element {
+    flex: 0 0 calc((100% - 10px) / 2);
+    height: calc((100% - 20px) / 3);
+    min-width: 0;
+    min-height: 0;
+    padding: 36px 12px 12px;
+    background-color: #616161;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    position: relative;
+}
+
+.element h2 {
+    position: absolute;
+    top: 10px;
+    left: 16px;
+    margin: 0;
+    font-size: clamp(0.875rem, 2vw, 1.25rem);
+}
+
+.element svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+@media (max-aspect-ratio: 1 / 3) {
+    .element {
+        flex-basis: 100%;
+        height: calc((100% - 50px) / 6);
+    }
+}
+
+@media (min-aspect-ratio: 1 / 1) {
+    .element {
+        flex-basis: calc((100% - 20px) / 3);
+        height: calc((100% - 10px) / 2);
+    }
+}
+
+@media (min-aspect-ratio: 3 / 1) {
+    .element {
+        flex-basis: calc((100% - 50px) / 6);
+        height: 100%;
+    }
+}

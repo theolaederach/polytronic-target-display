@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='fullscreen.css') }}"
+        />
+        <link
+            rel="shortcut icon"
+            href="{{ url_for('static', filename='favicon.ico') }}"
+        />
+        <title>Target Display | fullscreen</title>
+    </head>
+    <body>
+        <div class="parent">
+            <div class="target1 element">
+                <h2>Target 1</h2>
+                <svg id="svg-target1" viewBox="0 0 1024 1024">
+                    <image
+                        href="{{ url_for('static', filename='assets/target_A10.png') }}"
+                        width="1024"
+                        height="1024"
+                    />
+                </svg>
+            </div>
+            <div class="target2 element">
+                <h2>Target 2</h2>
+                <svg id="svg-target2" viewBox="0 0 1024 1024">
+                    <image
+                        href="{{ url_for('static', filename='assets/target_A10.png') }}"
+                        width="1024"
+                        height="1024"
+                    />
+                </svg>
+            </div>
+            <div class="target3 element">
+                <h2>Target 3</h2>
+                <svg id="svg-target3" viewBox="0 0 1024 1024">
+                    <image
+                        href="{{ url_for('static', filename='assets/target_A10.png') }}"
+                        width="1024"
+                        height="1024"
+                    />
+                </svg>
+            </div>
+            <div class="target4 element">
+                <h2>Target 4</h2>
+                <svg id="svg-target4" viewBox="0 0 1024 1024">
+                    <image
+                        href="{{ url_for('static', filename='assets/target_A10.png') }}"
+                        width="1024"
+                        height="1024"
+                    />
+                </svg>
+            </div>
+            <div class="target5 element">
+                <h2>Target 5</h2>
+                <svg id="svg-target5" viewBox="0 0 1024 1024">
+                    <image
+                        href="{{ url_for('static', filename='assets/target_A10.png') }}"
+                        width="1024"
+                        height="1024"
+                    />
+                </svg>
+            </div>
+            <div class="other element">
+                <h2>other</h2>
+                <div></div>
+            </div>
+        </div>
+        <script src="{{ url_for('static', filename='js/update-target.js') }}"></script>
+    </body>
+</html>
