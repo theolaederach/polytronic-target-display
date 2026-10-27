@@ -1,39 +1,95 @@
+# Title : database/Writer
+# Author : Théo
+# Last update : 27.10.2026
+# Description : Module for Write the data into the db
+#               and manage the target with InitTarget()
+
 import mariadb
 
-from database.connection import _get_connection
+from database.connection import _get_connection, execute_request
 
 
 class InitTarget:
     """
-    Gestionnaire d'état et d'écriture pour une cible spécifique.
-    Chaque méthode ouvre sa propre connexion pour garantir la sécurité en parallèle.
+    State manager and writer for a specific target.
     """
 
     def __init__(self, target_number: int) -> None:
+        """
+        Initializes the target by setting the current program and series.
+        """
         self.target_number = target_number
-        self.current_programm_guid: str | None = None
-        self.current_serie_guid: str | None = None
+        self.current_programm_id: int | None
+        self.current_serie_id: int | None
 
-    def _execute_write(self, query: str, params: tuple) -> bool:
-        """Helper interne pour exécuter une requête d'écriture avec gestion d'erreur."""
+        # create the reference of the current target in the db
+        query_set_current = """
+        INSERT INTO `polytronic-target-display`.`current`
+        (target_number, programm_id, series_id)
+        SELECT ?, NULL, NULL
+        WHERE NOT EXISTS (
+            SELECT 1 FROM `polytronic-target-display`.`current`
+            WHERE `polytronic-target-display`.`current`.target_number = ?
+        );
+        """
+        args = (target_number, target_number)
+        self._execute_write(query_set_current, args)
+
+        # get the current id of the programm and the series from the db
+        query_get_current_id = """
+        SELECT c.programm_id, c.series_id
+        FROM `polytronic-target-display`.`current` c
+        WHERE c.target_number = ?;
+        """
+        currents_id = execute_request(query_get_current_id, (self.target_number,))
+        if currents_id:
+            for data in currents_id:
+                self.current_programm_id = data[0]
+                self.current_serie_id = data[1]
+
+        else:
+            self.current_programm_id = None
+            self.current_serie_id = None
+
+    def _execute_write(
+        self, query: str, params: tuple, get_id: bool = False
+    ) -> int | None:
+        """
+        Internal helper to execute a write query with error handling.
+        Returns the last inserted id if the option is enabled.
+
+        Args:
+            query (str): the SQL query to execute
+            params (tuple): the values that replace "?" in the query.
+            get_id (bool): return the id of the last insert query if True
+
+        Returns:
+            The id of the last insert query or None if get_id is False or an error occurs
+        """
         conn = None
         cursor = None
+
         try:
             conn = _get_connection()
             cursor = conn.cursor()
             cursor.execute(query, params)
+            if get_id:
+                cursor.execute("SELECT LAST_INSERT_ID() AS inserted_id;")
+                last_id_insered = cursor.fetchone()[0]
+            else:
+                last_id_insered = None
             conn.commit()
-            return True
+            return last_id_insered
         except mariadb.IntegrityError as e:
             print(f"Erreur d'intégrité (doublon ?) : {e}")
             if conn:
                 conn.rollback()
-            return False
+            return None
         except mariadb.Error as e:
             print(f"Erreur écriture DB : {e}")
             if conn:
                 conn.rollback()
-            return False
+            return None
         finally:
             if cursor:
                 cursor.close()
@@ -41,81 +97,65 @@ class InitTarget:
                 conn.close()
 
     def start_programm(self, shooter_number: int, time: str, guid: str) -> None:
-        self.current_programm_guid = guid
-        insert_query = "INSERT INTO programm (shooters_number, taget_number,target_type, start_time, GUID) VALUES (?, ?, ?, ?)"
+        insert_query = "INSERT INTO programm (shooters_number, taget_number, target_type, start_time, GUID) VALUES (?, ?, ?, ?, ?)"
+        self.current_programm_id = self._execute_write(
+            insert_query,
+            (shooter_number, self.target_number, "A10", time, guid),
+            get_id=True,
+        )
+        # update the current programm_id on the db
+        update_query = """
+        UPDATE `polytronic-target-display`.`current`
+        SET programm_id = ?
+        WHERE target_number = ?;
+        """
         self._execute_write(
-            insert_query, (shooter_number, self.target_number, "A10", time, guid)
+            update_query, (self.current_programm_id, self.target_number), get_id=False
         )
 
     def start_serie(self, serie_type: int, time: str, guid: str) -> None:
-        self.current_serie_guid = guid
+        insert_query = "INSERT INTO series (programm_id, type, start_time, `show`, GUID) VALUES (?, ?, ?, ?, ?)"
+        showed = 0 if serie_type == 2 else 1
 
-        conn = None
-        cursor = None
-        programm_id = None
-
-        try:
-            conn = _get_connection()
-            cursor = conn.cursor()
-
-            # 1. Trouver l'ID du programme
-            query = "SELECT id FROM programm WHERE GUID LIKE ?"
-            cursor.execute(query, (f"%{self.current_programm_guid}%",))
-            result = cursor.fetchone()
-
-            if result:
-                programm_id = result[0]
-            else:
-                print(
-                    f"Aucun programme trouvé avec le GUID : {self.current_programm_guid}"
-                )
-
-            # 2. Préparer l'insertion
-            showed = 0 if serie_type == 2 else 1
-            insert_query = "INSERT INTO series (programm_id, type, start_time, `show`, GUID) VALUES (?, ?, ?, ?, ?)"
-
-            # On réutilise le même curseur/connexion car on est dans le même bloc try
-            cursor.execute(insert_query, (programm_id, serie_type, time, showed, guid))
-            conn.commit()
-
-        except mariadb.IntegrityError as e:
-            print(f"Erreur intégrité série : {e}")
-            if conn:
-                conn.rollback()
-        except mariadb.Error as e:
-            print(f"Erreur écriture série : {e}")
-            if conn:
-                conn.rollback()
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
+        self.current_serie_id = self._execute_write(
+            insert_query,
+            (self.current_programm_id, serie_type, time, showed, guid),
+            get_id=True,
+        )
+        # update the current serie_id on the db
+        update_query = """
+        UPDATE `polytronic-target-display`.`current`
+        SET series_id = ?
+        WHERE target_number = ?;
+        """
+        self._execute_write(
+            update_query, (self.current_serie_id, self.target_number), get_id=False
+        )
 
     def serie_finish(self, time: str) -> None:
         from database.reader import listScore
 
-        if not self.current_serie_guid:
+        if not self.current_serie_id:
             return
         update_query = "UPDATE series SET `show` = ?, score_base10 = ?, score_base100 = ?, end_time = ? WHERE GUID = ?"
-        score_base10 = sum(listScore(self.current_serie_guid, "shots", max=10))
-        score_base100 = sum(listScore(self.current_serie_guid, "shots", max=100))
+        score_base10 = sum(listScore(self.current_serie_id, "shots", max=10))
+        score_base100 = sum(listScore(self.current_serie_id, "shots", max=100))
         self._execute_write(
             update_query,
-            (1, score_base10, score_base100, time, self.current_serie_guid),
+            (1, score_base10, score_base100, time, self.current_serie_id),
         )
 
     def programm_finish(self, time: str) -> None:
         from database.reader import listScore
 
-        if not self.current_programm_guid:
+        if not self.current_programm_id:
             return
-        score_base10 = sum(listScore(self.current_programm_guid, "series", max=10))
-        score_base100 = sum(listScore(self.current_programm_guid, "series", max=100))
+        score_base10 = sum(listScore(self.current_programm_id, "series", max=10))
+        score_base100 = sum(listScore(self.current_programm_id, "series", max=100))
         update_query = "UPDATE programm SET score_base10 = ?, score_base100 = ?, end_time = ? WHERE GUID = ?"
         self._execute_write(
             update_query,
-            (score_base10, score_base100, time, self.current_programm_guid),
+            (score_base10, score_base100, time, self.current_programm_id),
         )
 
     def shot(
@@ -127,49 +167,15 @@ class InitTarget:
         time: str,
         guid: str,
     ) -> None:
-        if not self.current_serie_guid:
+        if not self.current_serie_id:
             print("Erreur: Tentative d'ajout de tir sans série active.")
             return
 
-        conn = None
-        cursor = None
-        series_id = None
-
-        try:
-            conn = _get_connection()
-            cursor = conn.cursor()
-
-            # 1. Trouver l'ID de la série
-            query = "SELECT id FROM series WHERE GUID LIKE ?"
-            cursor.execute(query, (f"%{self.current_serie_guid}%",))
-            result = cursor.fetchone()
-
-            if result:
-                series_id = result[0]
-            else:
-                print(f"Aucune série trouvée avec le GUID : {self.current_serie_guid}")
-                return
-
-            # 2. Insérer le tir
-            insert_query = "INSERT INTO shots (x, y, time, score_base10, score_base100, series_id, GUID) VALUES (?, ?, ?, ?, ?, ?, ?)"
-            cursor.execute(
-                insert_query, (pos_x, pos_y, time, score_10, score_100, series_id, guid)
-            )
-            conn.commit()
-
-        except mariadb.IntegrityError as e:
-            print(f"Erreur intégrité tir : {e}")
-            if conn:
-                conn.rollback()
-        except mariadb.Error as e:
-            print(f"Erreur écriture tir : {e}")
-            if conn:
-                conn.rollback()
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
+        insert_query = "INSERT INTO shots (x, y, time, score_base10, score_base100, series_id, GUID) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        self._execute_write(
+            insert_query,
+            (pos_x, pos_y, time, score_10, score_100, self.current_serie_id, guid),
+        )
 
 
 # List of targets
