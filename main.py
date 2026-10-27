@@ -6,7 +6,7 @@ import threading
 from dotenv import load_dotenv
 
 from listener import listen
-from web_server import app
+from server import app
 
 load_dotenv()
 
