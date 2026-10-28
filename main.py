@@ -13,22 +13,35 @@ load_dotenv()
 
 def get_args():
     parser = argparse.ArgumentParser(description="Polytronic Target‑Display launcher")
+
+    # Web server settings
     parser.add_argument(
         "--web_server_only",
         action="store_true",
-        help="Démarrer uniquement le serveur web (sans écoute TCP)",
+        help="Start the web server without the tcp listening",
     )
-    # Vous pouvez ajouter d’autres options, par ex. l’IP/port d’écoute
+    parser.add_argument(
+        "--web_server-host",
+        default=os.getenv("HOST_WEB_SERVER", "0.0.0.0"),
+        help="Setup the host of the web server, DEFAULT 0.0.0.0",
+    )
+    parser.add_argument(
+        "--web_server-port",
+        default=int(os.getenv("PORT_WEB_SERVER", "5000")),
+        help="Setup the port of the web server, DEFAULT 5000",
+    )
+
+    # Listener settings
     parser.add_argument(
         "--listen-ip",
         default=os.getenv("URL_LISTENER", "0.0.0.0"),
-        help="Adresse d’écoute TCP (défaut: 0.0.0.0)",
+        help="Listen address TCP (défaut: 0.0.0.0)",
     )
     parser.add_argument(
         "--listen-port",
         type=int,
         default=int(os.getenv("PORT_LISTENER", "4000")),
-        help="Port d’écoute TCP (défaut: 4000)",
+        help="Listen port TCP (défaut: 4000)",
     )
     return parser.parse_args()
 
@@ -51,4 +64,6 @@ if __name__ == "__main__":
         )
 
     # Start the web server
-    app.startWebServer()
+    app.startWebServer(host=args.web_server_host,
+        port=args.web_server_port
+    )
