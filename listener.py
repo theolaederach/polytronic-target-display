@@ -25,18 +25,13 @@ import sys
 from datetime import datetime
 from io import StringIO
 
-from database.writer import InitTarget, targets
+from database.writer import targets
 
 port_str = os.getenv("PORT_LISTENER", "4000")
 PORT = int(port_str)
 
 HOST = os.getenv("URL_LISTENER", "0.0.0.0")
 
-numberOfTarget_str = os.getenv("NumberOfTarget", "5")
-numberOfTarget = int(numberOfTarget_str)
-
-for target in range(numberOfTarget):
-    targets.insert(target, InitTarget(target))
 
 
 def listen(host: str = HOST, port: int = PORT) -> None:
