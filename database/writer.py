@@ -4,6 +4,8 @@
 # Description : Module for Write the data into the db
 #               and manage the target with InitTarget()
 
+import os
+
 import mariadb
 
 from database.connection import _get_connection, execute_request
@@ -36,20 +38,23 @@ class InitTarget:
         self._execute_write(query_set_current, args)
 
         # get the current id of the programm and the series from the db
-        query_get_current_id = """
-        SELECT c.programm_id, c.series_id
-        FROM `polytronic-target-display`.`current` c
-        WHERE c.target_number = ?;
-        """
-        currents_id = execute_request(query_get_current_id, (self.target_number,))
-        if currents_id:
-            for data in currents_id:
-                self.current_programm_id = data[0]
-                self.current_serie_id = data[1]
+        self.update()
 
-        else:
-            self.current_programm_id = None
-            self.current_serie_id = None
+    def update(self) -> None:
+         query_get_current_id = """
+         SELECT c.programm_id, c.series_id
+         FROM `polytronic-target-display`.`current` c
+         WHERE c.target_number = ?;
+         """
+         currents_id = execute_request(query_get_current_id, (self.target_number,))
+         if currents_id:
+             for data in currents_id:
+                 self.current_programm_id = data[0]
+                 self.current_serie_id = data[1]
+
+         else:
+             self.current_programm_id = None
+             self.current_serie_id = None
 
     def _execute_write(
         self, query: str, params: tuple, get_id: bool = False
@@ -180,3 +185,9 @@ class InitTarget:
 
 # List of targets
 targets: list[InitTarget] = []
+
+numberOfTarget_str = os.getenv("NumberOfTarget", "5")
+numberOfTarget = int(numberOfTarget_str)
+
+for target in range(numberOfTarget):
+    targets.insert(target, InitTarget(target))

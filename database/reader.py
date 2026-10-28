@@ -13,6 +13,7 @@ def listLastShot(target_number: int) -> list[tuple[float, float, int]]:
 
     (to do later, i'm too busy now)
     """
+    targets[target_number].update()
 
     # Checking Whether the Target Exists in the Global List
     try:
@@ -106,7 +107,7 @@ def listScore(parent_id: int, type: str, max: int = 10) -> list[int]:
 
 
 def getShooterNumber(target_number: int) -> int | None:
-
+    targets[target_number].update()
     programm_guid = targets[target_number].current_programm_id
     request = "SELECT p.shooters_number FROM programm p WHERE p.GUID = ?;"
 
@@ -124,6 +125,7 @@ def getScoreSeriesOnTarget(target_number: int) -> int | None:
     Function description :
     To do later too, i'm still too busy
     """
+    targets[target_number].update()
     try:
         serie_id = targets[target_number].current_serie_id
     except (IndexError, AttributeError):
