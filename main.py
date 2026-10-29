@@ -1,10 +1,10 @@
 # main.py
 import argparse
 import os
+import sys
 import threading
 
 from dotenv import load_dotenv
-
 
 load_dotenv()
 
@@ -51,19 +51,26 @@ def get_args():
 
 
 if __name__ == "__main__":
+    #check if the .env file exist
+    if not os.path.exists(".env"):
+        print(".env file not found. Exiting.")
+        sys.exit(1)
+
     args = get_args()
     if args.web_server_only and args.listener_only:
         raise argparse.ArgumentError(
             None,
-            "You must choose whether you want to run only the web server or only the TCP listener !!!")
+            "You must choose whether you want to run only the web server or only the TCP listener !!!",
+        )
 
     if args.listener_only:
-
         from listener import listen
+
         listen(host=args.listen_ip, port=args.listen_port)
 
     elif not args.web_server_only:
         from listener import listen
+
         listener_thread = threading.Thread(
             target=listen,
             kwargs={"host": args.listen_ip, "port": args.listen_port},
@@ -77,6 +84,7 @@ if __name__ == "__main__":
 
     if not args.listener_only:
         from server import app
+
         app.startWebServer(
             host=args.web_server_host,
             port=args.web_server_port,

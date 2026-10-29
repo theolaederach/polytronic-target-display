@@ -142,7 +142,7 @@ class InitTarget:
 
         if not self.current_serie_id:
             return
-        update_query = "UPDATE series SET `show` = ?, score_base10 = ?, score_base100 = ?, end_time = ? WHERE GUID = ?"
+        update_query = "UPDATE series SET `show` = ?, score_base10 = ?, score_base100 = ?, end_time = ? WHERE id = ?"
         score_base10 = sum(listScore(self.current_serie_id, "shots", max=10))
         score_base100 = sum(listScore(self.current_serie_id, "shots", max=100))
         self._execute_write(
@@ -157,7 +157,7 @@ class InitTarget:
             return
         score_base10 = sum(listScore(self.current_programm_id, "series", max=10))
         score_base100 = sum(listScore(self.current_programm_id, "series", max=100))
-        update_query = "UPDATE programm SET score_base10 = ?, score_base100 = ?, end_time = ? WHERE GUID = ?"
+        update_query = "UPDATE programm SET score_base10 = ?, score_base100 = ?, end_time = ? WHERE id = ?"
         self._execute_write(
             update_query,
             (score_base10, score_base100, time, self.current_programm_id),
