@@ -73,7 +73,7 @@ def analyse_data(data: str = "") -> None:
     if row == []:
         return
     dataType = row[0]  # (_SHOT, _GRPH)
-    if {"_DIAG": True, "_GRPH": True, "_SUBT": True, "_PRST": True, "_SHOT": True}.get(
+    if {"_PRCH": True, "_GRPH": True, "_SUBT": True, "_PRST": True, "_SHOT": True}.get(
         dataType
     ):
         target_number = int(row[1])  # target number base 0
@@ -85,10 +85,10 @@ def analyse_data(data: str = "") -> None:
     except IndexError:
         time = datetime.now().strftime("%H:%M:%S.%f")
 
-    if dataType == "_DIAG":
+    if dataType == "_PRCH":
         # Begin of a programm
-        # _DIAG;3;4;1839;60;5;12:09:13.00;11;0;0;2199066336
-        guid = row[10]
+        # _PRCH;3;4;1839;60;2;12:08:43.74;0;0;4;0;0;0;82;4;0;0;1839;0;0;0;0;0;0;0;2199063379
+        guid = row[25]
 
         targets[target_number].start_programm(shooter_number, time, guid)
 
@@ -104,7 +104,7 @@ def analyse_data(data: str = "") -> None:
         # End of a serie
         # _SUBT;3;4;1839;60;110;12:27:27.27;7;0;66;626;2199175750
 
-        targets[target_number].serie_finish()
+        targets[target_number].serie_finish(time)
 
     elif dataType == "_PRST":
         # End of a programm

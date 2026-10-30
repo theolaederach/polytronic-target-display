@@ -22,7 +22,6 @@ class InitTarget:
         self.target_number = target_number
         self.current_programm_id: int | None
         self.current_serie_id: int | None
-        self.programm_end: bool = False
 
         # create the reference of the current target in the db
         query_set_current = """
@@ -103,6 +102,9 @@ class InitTarget:
                 conn.close()
 
     def start_programm(self, shooter_number: int, time: str, guid: str) -> None:
+        # force the programm to finish
+        self.programm_finish(time)
+
         insert_query = "INSERT INTO programm (shooters_number, taget_number, target_type, start_time, GUID) VALUES (?, ?, ?, ?, ?)"
         self.current_programm_id = (
             self._execute_write(
@@ -123,7 +125,6 @@ class InitTarget:
         self._execute_write(
             update_query, (self.current_programm_id, self.target_number), get_id=False
         )
-        self.programm_end = False
 
     def start_serie(self, serie_type: int, time: str, guid: str) -> None:
 
@@ -161,19 +162,18 @@ class InitTarget:
             (1, score_base10, score_base100, time, self.current_serie_id),
         )
 
-        if self.programm_end:
-            if not self.current_programm_id:
-                return
-            score_base10 = sum(listScore(self.current_programm_id, "series", max=10))
-            score_base100 = sum(listScore(self.current_programm_id, "series", max=100))
-            update_query = "UPDATE programm SET score_base10 = ?, score_base100 = ?, end_time = ? WHERE id = ?"
-            self._execute_write(
-                update_query,
-                (score_base10, score_base100, time, self.current_programm_id),
-            )
+    def programm_finish(self, time) -> None:
+        from database.reader import listScore
 
-    def programm_finish(self) -> None:
-        self.programm_end = True
+        if not self.current_programm_id:
+            return
+        score_base10 = sum(listScore(self.current_programm_id, "series", max=10))
+        score_base100 = sum(listScore(self.current_programm_id, "series", max=100))
+        update_query = "UPDATE programm SET score_base10 = ?, score_base100 = ?, end_time = ? WHERE id = ?"
+        self._execute_write(
+            update_query,
+            (score_base10, score_base100, time, self.current_programm_id),
+        )
 
     def shot(
         self,
