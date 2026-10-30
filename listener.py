@@ -33,7 +33,6 @@ PORT = int(port_str)
 HOST = os.getenv("URL_LISTENER", "0.0.0.0")
 
 
-
 def listen(host: str = HOST, port: int = PORT) -> None:
     """Start a blocking TCP server that prints each received line.
 
@@ -74,13 +73,17 @@ def analyse_data(data: str = "") -> None:
     if row == []:
         return
     dataType = row[0]  # (_SHOT, _GRPH)
-    target_number = int(row[1])  # target number base 0
-    shooter_number = int(row[3])
+    if {"_DIAG": True, "_GRPH": True, "_SUBT": True, "_PRST": True, "_SHOT": True}.get(
+        dataType
+    ):
+        target_number = int(row[1])  # target number base 0
+        shooter_number = int(row[3])
+    else:
+        return
     try:
         time = row[6]
     except IndexError:
-        time = ""
-        # print(row, IndexError)
+        time = datetime.now().strftime("%H:%M:%S.%f")
 
     if dataType == "_DIAG":
         # Begin of a programm
@@ -101,12 +104,12 @@ def analyse_data(data: str = "") -> None:
         # End of a serie
         # _SUBT;3;4;1839;60;110;12:27:27.27;7;0;66;626;2199175750
 
-        targets[target_number].serie_finish(time)
+        targets[target_number].serie_finish()
 
     elif dataType == "_PRST":
         # End of a programm
         # _PRST;3;4;1839;51;0
-        targets[target_number].programm_finish(datetime.now().strftime("%H:%M:%S.%f"))
+        targets[target_number].programm_finish(time)
 
     elif dataType == "_SHOT":
         # record a shot
