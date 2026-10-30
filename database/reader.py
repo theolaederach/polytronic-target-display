@@ -1,6 +1,7 @@
-"""
-This file only call the read function, like readShots
-"""
+# Title : database/reader
+# Author : Théo
+# Last update : 27.10.2026
+# Description : Module for read the database with function like listScore()
 
 from database.connection import execute_request
 from database.writer import targets
@@ -12,10 +13,11 @@ def listLastShot(target_number: int) -> list[tuple[float, float, int]]:
 
     (to do later, i'm too busy now)
     """
+    targets[target_number].update()
 
     # Checking Whether the Target Exists in the Global List
     try:
-        current_guid = targets[target_number].current_serie_guid
+        current_guid = targets[target_number].current_serie_id
     except (IndexError, AttributeError):
         print(f"Waring : Target {target_number} uninitialised or not found.")
         return []
@@ -26,7 +28,7 @@ def listLastShot(target_number: int) -> list[tuple[float, float, int]]:
     shots: list[tuple[float, float, int]] = []
 
     # get the info of the series
-    request = "SELECT id, `show` FROM series WHERE GUID LIKE ?"
+    request = "SELECT id, `show` FROM series WHERE id LIKE ?"
     reponse = execute_request(request, (current_guid,))
     if reponse:
         result_seri = reponse[0]
@@ -54,13 +56,13 @@ def listLastShot(target_number: int) -> list[tuple[float, float, int]]:
         return []
 
 
-def listScore(guid: str, type: str, max: int = 10) -> list[int]:
+def listScore(parent_id: int, type: str, max: int = 10) -> list[int]:
     """
     this function return all the shots's scrores of a series.
     you can only user guid or target_number, not both of theme.
 
     Args:
-        guid (str): the guid of the series/programm
+        parent_id (int): the id of the series/programm (parent)
         type (str): shots/series
         max (int): max of the scores. 10/100 is the only value aviable
 
@@ -86,12 +88,11 @@ def listScore(guid: str, type: str, max: int = 10) -> list[int]:
         raise ValueError("the max can only be 10 or 100.")
 
     # request to get the lists of scores of the shots/series
-    select_query = (
-        f"SELECT child.{shot_col} FROM {child_type} child "
-        f"inner join {parent_type} parent on parent.id = child.{parent_type}_id "
-        f"WHERE parent.GUID = ?;"
-    )
-    reponse = execute_request(select_query, (guid,))
+    select_query = f"""
+        SELECT child.{shot_col} FROM {child_type} child
+        WHERE child.{parent_type}_id = ?;
+        """
+    reponse = execute_request(select_query, (parent_id,))
 
     if reponse:
         for row in reponse:
@@ -106,8 +107,8 @@ def listScore(guid: str, type: str, max: int = 10) -> list[int]:
 
 
 def getShooterNumber(target_number: int) -> int | None:
-
-    programm_guid = targets[target_number].current_programm_guid
+    targets[target_number].update()
+    programm_guid = targets[target_number].current_programm_id
     request = "SELECT p.shooters_number FROM programm p WHERE p.GUID = ?;"
 
     reponse = execute_request(request, (programm_guid,))
@@ -124,16 +125,17 @@ def getScoreSeriesOnTarget(target_number: int) -> int | None:
     Function description :
     To do later too, i'm still too busy
     """
+    targets[target_number].update()
     try:
-        serie_guid = targets[target_number].current_serie_guid
+        serie_id = targets[target_number].current_serie_id
     except (IndexError, AttributeError):
         print(f"Waring : Target {target_number} uninitialised or not found.")
         return None
 
-    if not serie_guid:
+    if not serie_id:
         return None
 
-    return sum(listScore(serie_guid, "shots", 10))
+    return sum(listScore(serie_id, "shots", 10))
 
 
 def getTargetType(target_number: int) -> str:
@@ -142,7 +144,7 @@ def getTargetType(target_number: int) -> str:
     To do later too, i'm still too busy
     """
     try:
-        programm_guid = targets[target_number].current_programm_guid
+        programm_guid = targets[target_number].current_programm_id
     except (IndexError, AttributeError):
         print(f"Waring : Target {target_number} uninitialised or not found.")
         return "A10"

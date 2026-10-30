@@ -80,30 +80,54 @@ Press `Ctrl+C` in the terminal that ran `app.py` – both the Flask server and t
 
 ---
 
+## To do
+
+- [x] make the target on the web page responsive
+- [x] auto change the type of target on the webpage
+- [ ] Add charts and statistics for each shooter
+- [ ] Make the home page of the website
+- [ ] Create an auto-install script
+- [x] Make the web server and the listener independant
+- [x] change the guid by the id of the shots/series/programm and add a table of the curreent shots/series/programm for each target.
+
+---
+
 ## Project layout
 
 ```
-polytronic-target-display/
-├─ app.py                 # Bootstrap – Flask + TCP listener
-├─ app_api.py             # REST API (shots endpoint)
-├─ app_routes.py          # HTML routes
-├─ database/
-│  ├─ __init__.py
-│  ├─ receiver.py         # TCP listener and parser
-│  ├─ database_rw.py      # DB CRUD helpers & InitTarget
-│  └─ create_structure.sql
-├─ static/
-│  ├─ js/update-target.js
-│  ├─ style.css
-│  └─ …
-├─ templates/
-│  ├─ home.html
-│  ├─ target.html
-│  └─ …
-├─ requirements.txt
-├─ .env.example
-├─ README.md
-└─ doc.md
+polytronic-target-display/                 # Project root
+├─ main.py                    # Entry point – starts Flask and the TCP listener
+├─ listener.py                # TCP listener and semicolon-delimited packet parser
+├─ database/                  # Data‑layer package
+│  ├─ connection.py           # MariaDB connections and parameterized queries
+│  ├─ reader.py               # Database read helpers for the API
+│  ├─ writer.py               # InitTarget state manager and write helpers
+│  └─ src/
+│     └─ create structure.sql  # MariaDB schema
+├─ server/                    # Flask application and browser interface
+│  ├─ app.py                  # Flask app and blueprint registration
+│  ├─ api/
+│  │  └─ shots.py             # GET /api/shots endpoint
+│  ├─ routes/
+│  │  └─ app_routes.py        # HTML page routes
+│  ├─ static/                 # Browser assets served by Flask
+│  │  ├─ assets/              # Target images
+│  │  ├─ js/
+│  │  │  └─ update-target.js  # Polls the API and draws SVG crosshairs
+│  │  ├─ favicon.ico
+│  │  ├─ fullscreen.css
+│  │  └─ style.css
+│  └─ templates/              # Jinja2 templates
+│     ├─ home.html
+│     ├─ target.html
+│     ├─ target_fs.html
+│     └─ credits.html
+├─ requirements.txt           # Python dependencies
+├─ .gitignore                 # Git ignore rules
+├─ .env.example               # Environment variable template
+├─ README.md                  # Quick start guide
+├─ AGENTS.md                  # AI‑friendly quick reference
+└─ doc.md                     # Full documentation (this file)
 ```
 
 ---

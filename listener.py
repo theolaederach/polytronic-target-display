@@ -25,18 +25,12 @@ import sys
 from datetime import datetime
 from io import StringIO
 
-from database.writer import InitTarget, targets
+from database.writer import targets
 
 port_str = os.getenv("PORT_LISTENER", "4000")
 PORT = int(port_str)
 
 HOST = os.getenv("URL_LISTENER", "0.0.0.0")
-
-numberOfTarget_str = os.getenv("NumberOfTarget", "5")
-numberOfTarget = int(numberOfTarget_str)
-
-for target in range(numberOfTarget):
-    targets.insert(target, InitTarget(target))
 
 
 def listen(host: str = HOST, port: int = PORT) -> None:
@@ -79,18 +73,22 @@ def analyse_data(data: str = "") -> None:
     if row == []:
         return
     dataType = row[0]  # (_SHOT, _GRPH)
-    target_number = int(row[1])  # target number base 0
-    shooter_number = int(row[3])
+    if {"_PRCH": True, "_GRPH": True, "_SUBT": True, "_PRST": True, "_SHOT": True}.get(
+        dataType
+    ):
+        target_number = int(row[1])  # target number base 0
+        shooter_number = int(row[3])
+    else:
+        return
     try:
         time = row[6]
     except IndexError:
-        time = ""
-        # print(row, IndexError)
+        time = datetime.now().strftime("%H:%M:%S.%f")
 
-    if dataType == "_DIAG":
+    if dataType == "_PRCH":
         # Begin of a programm
-        # _DIAG;3;4;1839;60;5;12:09:13.00;11;0;0;2199066336
-        guid = row[10]
+        # _PRCH;3;4;1839;60;2;12:08:43.74;0;0;4;0;0;0;82;4;0;0;1839;0;0;0;0;0;0;0;2199063379
+        guid = row[25]
 
         targets[target_number].start_programm(shooter_number, time, guid)
 
@@ -111,7 +109,7 @@ def analyse_data(data: str = "") -> None:
     elif dataType == "_PRST":
         # End of a programm
         # _PRST;3;4;1839;51;0
-        targets[target_number].programm_finish(datetime.now().strftime("%H:%M:%S.%f"))
+        targets[target_number].programm_finish(time)
 
     elif dataType == "_SHOT":
         # record a shot

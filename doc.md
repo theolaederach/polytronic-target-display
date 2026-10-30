@@ -18,40 +18,47 @@ The application visualises live target‑shooting data received over a TCP socke
 
 ```
 polytronic-target-display/                 # Project root
-├─ app.py                     # Entry point – starts Flask + TCP listener thread
-├─ app_api.py                 # Flask Blueprint providing REST endpoints
-├─ app_routes.py              # Blueprint with HTML routes (home, target, etc.)
+├─ main.py                    # Entry point – starts Flask and the TCP listener
+├─ listener.py                # TCP listener and semicolon-delimited packet parser
 ├─ database/                  # Data‑layer package
-│  ├─ __init__.py
-│  ├─ receiver.py             # TCP listener & packet parser
-│  ├─ database_rw.py          # DB CRUD helpers & InitTarget state manager
-│  ├─ create_structure.sql    # SQL schema for MariaDB
-├─ static/                    # Static assets served by Flask
-│  ├─ style.css
-│  ├─ fullscreen.css
-│  ├─ favicon.ico
-│  └─ js/
-│     └─ update-target.js     # Front‑end logic to poll API & draw SVG
-├─ templates/                 # Jinja2 templates
-│  ├─ home.html
-│  ├─ target.html
-│  ├─ target_fs.html
-│  ├─ credits.html
-│  └─ test.html
+│  ├─ connection.py           # MariaDB connections and parameterized queries
+│  ├─ reader.py               # Database read helpers for the API
+│  ├─ writer.py               # InitTarget state manager and write helpers
+│  └─ src/
+│     └─ create structure.sql  # MariaDB schema
+├─ server/                    # Flask application and browser interface
+│  ├─ app.py                  # Flask app and blueprint registration
+│  ├─ api/
+│  │  └─ shots.py             # GET /api/shots endpoint
+│  ├─ routes/
+│  │  └─ app_routes.py        # HTML page routes
+│  ├─ static/                 # Browser assets served by Flask
+│  │  ├─ assets/              # Target images
+│  │  ├─ js/
+│  │  │  └─ update-target.js  # Polls the API and draws SVG crosshairs
+│  │  ├─ favicon.ico
+│  │  ├─ fullscreen.css
+│  │  └─ style.css
+│  └─ templates/              # Jinja2 templates
+│     ├─ home.html
+│     ├─ target.html
+│     ├─ target_fs.html
+│     └─ credits.html
 ├─ requirements.txt           # Python dependencies
 ├─ .gitignore                 # Git ignore rules
+├─ .env.example               # Environment variable template
 ├─ README.md                  # Quick start guide
-├─ AGENT.MD                   # AI‑friendly quick reference
+├─ AGENTS.md                  # AI‑friendly quick reference
 └─ doc.md                     # Full documentation (this file)
 ```
 
 ### Data Flow
 
-1. **TCP Listener** – `database.receiver.listen()` runs in its own thread, bound to the port defined by `PORT_LISTENER`.
+1. **TCP Listener** – `listener.listen()` runs in its own thread, bound to the port defined by `PORT_LISTENER`.
 2. **Packet Parser** – Each incoming line is parsed by `analyse_data()` which dispatches to methods of an `InitTarget` instance.
 3. **Database Persist** – `InitTarget` methods (`start_programm`, `start_serie`, `shot`, …) open a fresh connection via `_get_connection()`, perform inserts/updates, and commit.
-4. **API** – `app_api.get_shots()` reads the current series of a target using `database_rw.readShot()` and returns a JSON list of shot coordinates.
-5. **Front‑end** – `static/js/update-target.js` periodically fetches `/api/shots?target=X` and draws cross‑hair SVGs.
+4. **API** – `server.api.shots.get_shots()` reads the current series of a target using `database.reader.listLastShot()` and returns shot data as JSON.
+5. **Front‑end** – `server/static/js/update-target.js` periodically fetches `/api/shots?target=X` and draws cross‑hair SVGs.
 
 ---
 
@@ -99,13 +106,13 @@ pip install -r requirements.txt
 
 # 2. Ensure the database schema is ready
 #   Create the database and run the SQL script:
-mysql -u <user> -p <database_name> < database/create_structure.sql
+mysql -u <user> -p <database_name> < database/src/create_structure.sql
 
 # 3. Set up environment variables (copy .env.example to .env and edit)
 cp .env.example .env
 
 # 4. Start the server
-python app.py
+python main.py
 ```
 
 The Flask app will be reachable at `http://localhost:5000/`. The TCP listener will bind to the configured host/port.
@@ -141,7 +148,7 @@ Example response for target 1:
 
 ### How the Front‑end Consumes It
 
-`static/js/update-target.js` performs a fetch every 2 s:
+`server/static/js/update-target.js` performs a fetch every 2 s:
 
 ```js
 fetch(`/api/shots?target=${targetId}`)
@@ -155,9 +162,9 @@ The SVG is updated by drawing cross‑hair lines and numbering each shot.
 
 ## 6. Core Classes & Functions
 
-### `database.database_rw.InitTarget`
+### `database.writer.InitTarget`
 
-Represents the state of a single target. Instances are stored in the global `targets` list by `database.receiver`. Key methods:
+Represents the state of a single target. Instances are stored in the global `targets` list by `listener`. Key methods:
 
 | Method                                                | Purpose                                                   |
 | ----------------------------------------------------- | --------------------------------------------------------- |
@@ -169,17 +176,17 @@ Represents the state of a single target. Instances are stored in the global `tar
 
 All DB operations open a fresh connection via `_get_connection()` and commit/rollback as needed.
 
-### `database.database_rw.readShot(target_number)`
+### `database.reader.listLastShot(target_number)`
 
 Reads all shots of the _current_ series for the specified target, returning a list of `(x, y)` tuples. The list is reversed so that the most recent shot appears first.
 
-### `database.receiver.analyse_data(line)`
+### `listener.analyse_data(line)`
 
 Parses a CSV line received on the TCP socket, determines the data type (`_SHOT`, `_GRPH`, etc.) and forwards it to the appropriate `InitTarget` method.
 
-### `app_api.get_shots()`
+### `server.api.shots.get_shots()`
 
-Flask view that extracts the `target` query param, calls `readShot`, and formats the result for the front‑end.
+Flask view that extracts the `target` query param, calls `listLastShot`, and formats the result for the front‑end.
 
 ---
 
@@ -188,11 +195,11 @@ Flask view that extracts the `target` query param, calls `readShot`, and formats
 
 | Task                         | Suggested Approach                                                                                                      |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **Add new API endpoint**     | Create a new route in `app_api.py`, register the blueprint, and write a helper in `database_rw` if DB access is needed. |
-| **Implement authentication** | Add a simple token header check in `app_api.get_shots` or integrate Flask‑Login / JWT.                                  |
+| **Add new API endpoint**     | Create a route in `server/api/`, register the blueprint in `server/app.py`, and write a helper in `database/reader.py` or `database/writer.py` if DB access is needed. |
+| **Implement authentication** | Add a simple token header check in `server.api.shots.get_shots` or integrate Flask‑Login / JWT.                         |
 | **Add unit tests**           | Use `pytest` and `pytest-flask` to test routes; mock DB connections using `unittest.mock`.                              |
 | **Improve logging**          | Replace `print` statements with Python's `logging` module; configure a file or stream handler.                          |
-| **Dockerise**                | Create a `Dockerfile` that installs dependencies and runs `python app.py`.                                              |
+| **Dockerise**                | Create a `Dockerfile` that installs dependencies and runs `python main.py`.                                            |
 
 ---
 -->
