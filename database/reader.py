@@ -17,19 +17,19 @@ def listLastShot(target_number: int) -> list[tuple[float, float, int]]:
 
     # Checking Whether the Target Exists in the Global List
     try:
-        current_guid = targets[target_number].current_serie_id
+        current_id = targets[target_number].current_serie_id
     except (IndexError, AttributeError):
         print(f"Waring : Target {target_number} uninitialised or not found.")
         return []
 
-    if not current_guid:
+    if not current_id:
         return []
 
     shots: list[tuple[float, float, int]] = []
 
     # get the info of the series
-    request = "SELECT id, `show` FROM series WHERE id LIKE ?"
-    reponse = execute_request(request, (current_guid,))
+    request = "SELECT id, `show` FROM series WHERE id = ?"
+    reponse = execute_request(request, (current_id,))
     if reponse:
         result_seri = reponse[0]
     else:
@@ -58,8 +58,7 @@ def listLastShot(target_number: int) -> list[tuple[float, float, int]]:
 
 def listScore(parent_id: int, type: str, max: int = 10) -> list[int]:
     """
-    this function return all the shots's scrores of a series.
-    you can only user guid or target_number, not both of theme.
+    this function return all the shots's scrores of a series, usind the id of the parent.
 
     Args:
         parent_id (int): the id of the series/programm (parent)
@@ -108,10 +107,10 @@ def listScore(parent_id: int, type: str, max: int = 10) -> list[int]:
 
 def getShooterNumber(target_number: int) -> int | None:
     targets[target_number].update()
-    programm_guid = targets[target_number].current_programm_id
-    request = "SELECT p.shooters_number FROM programm p WHERE p.GUID = ?;"
+    programm_id = targets[target_number].current_programm_id
+    request = "SELECT p.shooters_number FROM programm p WHERE p.id = ?;"
 
-    reponse = execute_request(request, (programm_guid,))
+    reponse = execute_request(request, (programm_id,))
 
     if reponse:
         shooter_number = reponse[0][0]
@@ -144,16 +143,16 @@ def getTargetType(target_number: int) -> str:
     To do later too, i'm still too busy
     """
     try:
-        programm_guid = targets[target_number].current_programm_id
+        programm_id = targets[target_number].current_programm_id
     except (IndexError, AttributeError):
         print(f"Waring : Target {target_number} uninitialised or not found.")
         return "A10"
 
-    if not programm_guid:
+    if not programm_id:
         return "A10"
 
-    request = "SELECT p.target_type FROM programm p WHERE p.GUID = ?;"
-    reponse = execute_request(request, (programm_guid,))
+    request = "SELECT p.target_type FROM programm p WHERE p.id = ?;"
+    reponse = execute_request(request, (programm_id,))
 
     if reponse:
         target_type = reponse[0][0]
