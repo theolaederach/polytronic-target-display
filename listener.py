@@ -85,39 +85,45 @@ def analyse_data(data: str = "") -> None:
     except IndexError:
         time = datetime.now().strftime("%H:%M:%S.%f")
 
-    if dataType == "_PRCH":
-        # Begin of a programm
-        # _PRCH;3;4;1839;60;2;12:08:43.74;0;0;4;0;0;0;82;4;0;0;1839;0;0;0;0;0;0;0;2199063379
-        guid = row[25]
+    try:
+        if dataType == "_PRCH":
+            # Begin of a programm
+            # _PRCH;3;4;1839;60;2;12:08:43.74;0;0;4;0;0;0;82;4;0;0;1839;0;0;0;0;0;0;0;2199063379
+            guid = row[25]
 
-        targets[target_number].start_programm(shooter_number, time, guid)
+            targets[target_number].start_programm(shooter_number, time, guid)
 
-    elif dataType == "_GRPH":
-        # Begin of a serie
-        # _GRPH;3;4;1839;60;101;12:26:52.69;8;0;0;1;0;0;1;2199172266
-        series_type = int(row[9])
-        guid = row[14]
+        elif dataType == "_GRPH":
+            # Begin of a serie
+            # _GRPH;3;4;1839;60;101;12:26:52.69;8;0;0;1;0;0;1;2199172266
+            series_type = int(row[9])
+            guid = row[14]
 
-        targets[target_number].start_serie(series_type, time, guid)
+            targets[target_number].start_serie(series_type, time, guid)
 
-    elif dataType == "_SUBT":
-        # End of a serie
-        # _SUBT;3;4;1839;60;110;12:27:27.27;7;0;66;626;2199175750
+        elif dataType == "_SUBT":
+            # End of a serie
+            # _SUBT;3;4;1839;60;110;12:27:27.27;7;0;66;626;2199175750
 
-        targets[target_number].serie_finish(time)
+            targets[target_number].serie_finish(time)
 
-    elif dataType == "_PRST":
-        # End of a programm
-        # _PRST;3;4;1839;51;0
-        targets[target_number].programm_finish(time)
+        elif dataType == "_PRST":
+            # End of a programm
+            # _PRST;3;4;1839;51;0
+            targets[target_number].programm_finish(time)
 
-    elif dataType == "_SHOT":
-        # record a shot
-        # _SHOT;3;4;1839;60;109;12:27:26.71;3;0;2048;8;74;0;8;0.11861770;0.06816363;900;0;0;655.35;2199175643;1;800;35
-        pos_x = float(row[14])
-        pos_y = float(row[15])
-        score_10 = int(row[10])
-        score_100 = int(row[11])
-        guid = row[20]
+        elif dataType == "_SHOT":
+            # record a shot
+            # _SHOT;3;4;1839;60;109;12:27:26.71;3;0;2048;8;74;0;8;0.11861770;0.06816363;900;0;0;655.35;2199175643;1;800;35
+            pos_x = float(row[14])
+            pos_y = float(row[15])
+            score_10 = int(row[10])
+            score_100 = int(row[11])
+            guid = row[20]
 
-        targets[target_number].shot(pos_x, pos_y, score_10, score_100, time, guid)
+            targets[target_number].shot(pos_x, pos_y, score_10, score_100, time, guid)
+    except IndentationError as e:
+        print(e, row)
+    except Exception as e:
+        print(e)
+        raise
