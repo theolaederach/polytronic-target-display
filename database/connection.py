@@ -11,11 +11,12 @@ from dotenv import load_dotenv
 _ = load_dotenv()
 
 port_str = os.getenv("DATABASE_PORT", "3306")
-port = int(port_str)
+PORT = int(port_str)
+DATABASE = os.getenv("DATABASE_NAME", "polytronic-target-display")
 
 db_config = {
     "host": os.getenv("DATABASE_URL"),
-    "port": port,
+    "port": PORT,
     "user": os.getenv("DATABASE_USER"),
     "password": os.getenv("DATABASE_PASSWORD"),
     "database": os.getenv("DATABASE_NAME"),
