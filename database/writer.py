@@ -60,7 +60,6 @@ class InitTarget:
     ) -> int | None:
         """
         Internal helper to execute a write query with error handling.
-        Returns the last inserted id if the option is enabled.
 
         Args:
             query (str): the SQL query to execute
@@ -101,20 +100,33 @@ class InitTarget:
             if conn:
                 conn.close()
 
-    def start_programm(self, shooter_number: int, time: str, guid: str) -> None:
-        # force the programm to finish
+    def start_programm(
+        self, shooter_number: int, time: str, guid: str, target_type: str = "A10"
+    ) -> None:
+        # The target type is not automaticlay set yet. to do later
+
+        # force the programm to finish if a new begin
         self.programm_finish(time)
 
-        insert_query = "INSERT INTO programm (shooters_number, taget_number, target_type, start_time, GUID) VALUES (?, ?, ?, ?, ?)"
-        self.current_programm_id = (
-            self._execute_write(
-                insert_query,
-                (shooter_number, self.target_number, "A10", time, guid),
-                get_id=True,
-            )
-            if not None
-            else self.current_programm_id
+        insert_query = (
+            "INSERT INTO programm (shooters_number, taget_number, target_type, "
+            "start_time, GUID) VALUES (?, ?, ?, ?, ?)"
         )
+        new_id = self._execute_write(
+            insert_query,
+            (shooter_number, self.target_number, target_type, time, guid),
+            get_id=True,
+        )
+
+        if new_id is None:
+            # INSERT failed (duplicate GUID, DB down...) : keep the previous state
+            print(
+                f"Erreur : programme non enregistré (cible {self.target_number}, "
+                f"guid {guid}), état précédent conservé."
+            )
+            return
+
+        self.current_programm_id = new_id
 
         # update the current programm_id on the db
         update_query = """
@@ -122,32 +134,44 @@ class InitTarget:
         SET programm_id = ?
         WHERE target_number = ?;
         """
-        self._execute_write(
-            update_query, (self.current_programm_id, self.target_number), get_id=False
-        )
+        self._execute_write(update_query, (new_id, self.target_number))
 
     def start_serie(self, serie_type: int, time: str, guid: str) -> None:
+        # Force the last serie to finish if a new begin
+        self.serie_finish(time)
 
-        insert_query = "INSERT INTO series (programm_id, type, start_time, `show`, GUID) VALUES (?, ?, ?, ?, ?)"
+        insert_query = (
+            "INSERT INTO series (programm_id, type, start_time, "
+            "`show`, GUID) VALUES (?, ?, ?, ?, ?)"
+        )
         showed = 0 if serie_type == 2 else 1
 
-        temp = self._execute_write(
+        new_id = self._execute_write(
             insert_query,
-            (self.current_programm_id, serie_type, time, showed, guid),
+            (self.current_serie_id, serie_type, time, showed, guid),
             get_id=True,
         )
-        if temp:
-            self.current_serie_id = temp
 
-        # update the current serie_id on the db
         update_query = """
         UPDATE `polytronic-target-display`.`current`
         SET series_id = ?
         WHERE target_number = ?;
         """
-        self._execute_write(
-            update_query, (self.current_serie_id, self.target_number), get_id=False
-        )
+
+        if new_id is None:
+            # INSERT failed (duplicate GUID, DB down...) : keep the previous state
+            print(
+                f"Erreur : serie non enregistré (cible {self.target_number}, "
+                f"guid {guid}), état précédent conservé."
+            )
+            # update the current serie id ans et it to None
+            self._execute_write(update_query, (None, self.target_number))
+            return
+
+        self.current_serie_id = new_id
+
+        # update the current serie id on the db
+        self._execute_write(update_query, (new_id, self.target_number))
 
     def serie_finish(self, time: str) -> None:
         from database.reader import listScore
