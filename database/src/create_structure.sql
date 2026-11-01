@@ -7,10 +7,7 @@ SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
--- -----------------------------------------------------
--- Schema polytronic-target-display
--- -----------------------------------------------------
-DROP SCHEMA IF EXISTS `polytronic-target-display` ;
+
 
 -- -----------------------------------------------------
 -- Schema polytronic-target-display
@@ -34,7 +31,7 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`programm` (
   `end_time` TIME NULL,
   `GUID` VARCHAR(10) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `GUID_UNIQUE` (`GUID` ASC) VISIBLE)
+  UNIQUE INDEX `GUID_UNIQUE` (`GUID` ASC) )
 ENGINE = InnoDB;
 
 
@@ -54,8 +51,8 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`series` (
   `end_time` TIME NULL,
   `GUID` VARCHAR(10) NOT NULL,
   PRIMARY KEY (`id`),
-  INDEX `fk_pass_programm1_idx` (`programm_id` ASC) VISIBLE,
-  UNIQUE INDEX `GUID_UNIQUE` (`GUID` ASC) VISIBLE,
+  INDEX `fk_pass_programm1_idx` (`programm_id` ASC) ,
+  UNIQUE INDEX `GUID_UNIQUE` (`GUID` ASC) ,
   CONSTRAINT `fk_pass_programm1`
     FOREIGN KEY (`programm_id`)
     REFERENCES `polytronic-target-display`.`programm` (`id`)
@@ -74,13 +71,13 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`shots` (
   `x` DECIMAL(4,3) NOT NULL,
   `y` DECIMAL(4,3) NOT NULL,
   `time` TIME NULL,
-  `score_base10` VARCHAR(45) NULL,
+  `score_base10` TINYINT(10)  NULL,
   `score_base100` TINYINT(100) NULL,
   `series_id` INT NOT NULL,
   `GUID` VARCHAR(10) NOT NULL,
   PRIMARY KEY (`id`),
-  INDEX `fk_shots_series_idx` (`series_id` ASC) VISIBLE,
-  UNIQUE INDEX `GUID_UNIQUE` (`GUID` ASC) VISIBLE,
+  INDEX `fk_shots_series_idx` (`series_id` ASC) ,
+  UNIQUE INDEX `GUID_UNIQUE` (`GUID` ASC) ,
   CONSTRAINT `fk_shots_passe1`
     FOREIGN KEY (`series_id`)
     REFERENCES `polytronic-target-display`.`series` (`id`)
@@ -99,9 +96,9 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`current` (
   `programm_id` INT NULL,
   `series_id` INT NULL,
   PRIMARY KEY (`target_number`),
-  INDEX `fk_current_programm1_idx` (`programm_id` ASC) VISIBLE,
-  INDEX `fk_current_series1_idx` (`series_id` ASC) VISIBLE,
-  UNIQUE INDEX `target_number_UNIQUE` (`target_number` ASC) VISIBLE,
+  INDEX `fk_current_programm1_idx` (`programm_id` ASC) ,
+  INDEX `fk_current_series1_idx` (`series_id` ASC) ,
+  UNIQUE INDEX `target_number_UNIQUE` (`target_number` ASC) ,
   CONSTRAINT `fk_current_programm1`
     FOREIGN KEY (`programm_id`)
     REFERENCES `polytronic-target-display`.`programm` (`id`)

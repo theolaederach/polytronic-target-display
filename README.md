@@ -104,7 +104,7 @@ polytronic-target-display/                 # Project root
 │  ├─ reader.py               # Database read helpers for the API
 │  ├─ writer.py               # InitTarget state manager and write helpers
 │  └─ src/
-│     └─ create structure.sql  # MariaDB schema
+│     └─ create_structure.sql  # MariaDB schema
 ├─ server/                    # Flask application and browser interface
 │  ├─ app.py                  # Flask app and blueprint registration
 │  ├─ api/

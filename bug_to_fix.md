@@ -16,10 +16,10 @@ Ces points cassent déjà le fonctionnement : à traiter en premier, ils tiennen
 - [x] `listener.py` : vérifier `0 <= target_number < len(targets)` avant `targets[target_number]`
 - [ ] `server/api/shots.py` : valider `target` (entier, entre 1 et `NumberOfTarget`) ; renvoyer 400/404 au lieu d'une erreur 500 ; `target=0` ne doit plus viser la dernière cible
 - [ ] `server/routes/app_routes.py` : supprimer la route `/test` (le template `test.html` n'existe pas, erreur 500)
-- [ ] `database/src/create structure.sql` : supprimer `DROP SCHEMA IF EXISTS` (relancer le script efface toutes les données)
-- [ ] `database/src/create structure.sql` : retirer `VISIBLE` des index (syntaxe MySQL 8, probablement refusée par MariaDB — à tester sur un vrai serveur)
-- [ ] `database/src/create structure.sql` : `shots.score_base10` en `VARCHAR(45)` → type entier ; corriger la faute `taget_number` (colonne, `writer.py` et `listener.py` à adapter ensemble)
-- [ ] Renommer le fichier SQL sans espace (`create_structure.sql`) et aligner le chemin dans le README et `doc.md`
+- [x] `database/src/create structure.sql` : supprimer `DROP SCHEMA IF EXISTS` (relancer le script efface toutes les données)
+- [x] `database/src/create structure.sql` : retirer `VISIBLE` des index (syntaxe MySQL 8, probablement refusée par MariaDB — à tester sur un vrai serveur)
+- [x] `database/src/create structure.sql` : `shots.score_base10` en `VARCHAR(45)` → type entier ; corriger la faute `taget_number` (colonne, `writer.py` et `listener.py` à adapter ensemble)
+- [x] Renommer le fichier SQL sans espace (`create_structure.sql`) et aligner le chemin dans le README et `doc.md`
 
 ## Priorité 2 – Robustesse
 
