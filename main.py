@@ -29,6 +29,12 @@ def get_args():
         default=int(os.getenv("PORT_WEB_SERVER", "5000")),
         help="Setup the port of the web server, DEFAULT 5000",
     )
+    parser.add_argument(
+        "--debug",
+        type=bool,
+        default=False,
+        help="Set the web server (Flask) into debug mode",
+    )
 
     # Listener settings
     parser.add_argument(
@@ -51,7 +57,7 @@ def get_args():
 
 
 if __name__ == "__main__":
-    #check if the .env file exist
+    # check if the .env file exist
     if not os.path.exists(".env"):
         print(".env file not found. Exiting.")
         sys.exit(1)

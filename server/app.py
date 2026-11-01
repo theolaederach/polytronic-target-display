@@ -15,6 +15,5 @@ app.register_blueprint(api, url_prefix="/api")
 app.register_blueprint(routes, url_prefix="/")
 
 
-def startWebServer(host:str="0.0.0.0",port:int = 5000):
-
-    app.run(host=host, port=port, debug=True, use_reloader=False)
+def startWebServer(host: str = "0.0.0.0", port: int = 5000, debug: bool = False):
+    app.run(host=host, port=port, debug=debug, use_reloader=False)
