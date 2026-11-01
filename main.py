@@ -57,11 +57,6 @@ def get_args():
 
 
 if __name__ == "__main__":
-    # check if the .env file exist
-    if not os.path.exists(".env"):
-        print(".env file not found. Exiting.")
-        sys.exit(1)
-
     args = get_args()
     if args.web_server_only and args.listener_only:
         raise argparse.ArgumentError(
