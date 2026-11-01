@@ -18,11 +18,12 @@ api = Blueprint("api", __name__, template_folder="templates")
 @api.route("/shots", methods=["GET"])
 def get_shots():
     raw_target = request.args.get("target")
-    if raw_target:
+
+    if raw_target and raw_target.isdigit and int(raw_target) < 0:
         target = int(raw_target) - 1
         raw_data = listLastShot(target)
     else:
-        return {"message": "ERROR, no target number", "target": raw_target}, 400
+        return {"message": "ERROR, invalid target number", "target": raw_target}, 400
 
     # Processing the tuple for js : [{ "x": -0.12, "y": 0.200, "number": 1, "score": 56 }, ...]
     shots = [
