@@ -59,8 +59,10 @@ def listen(host: str = HOST, port: int = PORT) -> None:
                             line = raw_line.decode("utf-8", errors="replace")
                         except UnicodeDecodeError:
                             line = raw_line.decode("latin-1", errors="replace")
-
-                        analyse_data(line)
+                        try:
+                            analyse_data(line)
+                        except IndexError as e:
+                            print(line, e)
 
         except KeyboardInterrupt:
             print("\nServer stopped by user.")
@@ -77,6 +79,9 @@ def analyse_data(data: str = "") -> None:
         dataType
     ):
         target_number = int(row[1])  # target number base 0
+        if not (0 <= target_number < len(targets)):
+            print("target number invalid in the listener : ", target_number)
+            return
         shooter_number = int(row[3])
     else:
         return

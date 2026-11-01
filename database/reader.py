@@ -43,7 +43,7 @@ def listLastShot(target_number: int) -> list[tuple[float, float, int]]:
         return []
 
     # Get the shots
-    request = "SELECT x, y,score_base100 FROM shots WHERE series_id = ?"
+    request = "SELECT x, y,score_base100 FROM shots WHERE series_id = ? order by id"
     reponse = execute_request(request, (serie_id,))
 
     if reponse:
