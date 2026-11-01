@@ -3,11 +3,23 @@
 # Last update : 30.10.2026
 # Description : Module for Write the data into the db
 #               and manage the target with InitTarget()
+import logging
 import os
 
 import mariadb
 
-from database.connection import _get_connection, execute_request
+logger = logging.getLogger(__name__)
+
+from database.connection import DATABASE, _get_connection, execute_request
+
+
+def get_current(target_number: int) -> tuple[int | None, int | None]:
+    """Return (programm_id, series_id) of the target, read from the db."""
+    rows = execute_request(
+        "SELECT programm_id, series_id FROM current WHERE target_number = ?",
+        (target_number,),
+    )
+    return (rows[0][0], rows[0][1]) if rows else (None, None)
 
 
 class InitTarget:
@@ -24,25 +36,25 @@ class InitTarget:
         self.current_serie_id: int | None
 
         # create the reference of the current target in the db
-        query_set_current = """
-        INSERT INTO `polytronic-target-display`.`current`
+        query_set_current = f"""
+        INSERT INTO `{DATABASE}`.`current`
         (target_number, programm_id, series_id)
         SELECT ?, NULL, NULL
         WHERE NOT EXISTS (
-            SELECT 1 FROM `polytronic-target-display`.`current`
-            WHERE `polytronic-target-display`.`current`.target_number = ?
+            SELECT 1 FROM `{DATABASE}`.`current`
+            WHERE `{DATABASE}`.`current`.target_number = ?
         );
         """
         args = (self.target_number, self.target_number)
         self._execute_write(query_set_current, args)
 
         # get the current id of the programm and the series from the db
-        self.update()
+        self._update()
 
-    def update(self) -> None:
-        query_get_current_id = """
+    def _update(self) -> None:
+        query_get_current_id = f"""
             SELECT c.programm_id, c.series_id
-            FROM `polytronic-target-display`.`current` c
+            FROM `{DATABASE}`.`current` c
             WHERE c.target_number = ?;
         """
         currents_id = execute_request(query_get_current_id, (self.target_number,))
@@ -83,6 +95,7 @@ class InitTarget:
                 return last_id_insered
             else:
                 return None
+
         except mariadb.IntegrityError as e:
             print(f"Erreur d'intégrité (doublon ?) : {e}")
             if conn:
@@ -109,7 +122,7 @@ class InitTarget:
         self.programm_finish(time)
 
         insert_query = (
-            "INSERT INTO programm (shooters_number, taget_number, target_type, "
+            f"INSERT INTO `{DATABASE}`.programm (shooters_number, taget_number, target_type, "
             "start_time, GUID) VALUES (?, ?, ?, ?, ?)"
         )
         new_id = self._execute_write(
@@ -129,8 +142,8 @@ class InitTarget:
         self.current_programm_id = new_id
 
         # update the current programm_id on the db
-        update_query = """
-        UPDATE `polytronic-target-display`.`current`
+        update_query = f"""
+        UPDATE `{DATABASE}`.`current`
         SET programm_id = ?
         WHERE target_number = ?;
         """
@@ -140,20 +153,25 @@ class InitTarget:
         # Force the last serie to finish if a new begin
         self.serie_finish(time)
 
+        programm_id, _ = get_current(self.target_number)
+        if programm_id is None:
+            print(f"Erreur : série sans programme actif (cible {self.target_number})")
+            return
+
         insert_query = (
-            "INSERT INTO series (programm_id, type, start_time, "
+            f"INSERT INTO `{DATABASE}`.series (programm_id, type, start_time, "
             "`show`, GUID) VALUES (?, ?, ?, ?, ?)"
         )
         showed = 0 if serie_type == 2 else 1
 
         new_id = self._execute_write(
             insert_query,
-            (self.current_serie_id, serie_type, time, showed, guid),
+            (programm_id, serie_type, time, showed, guid),
             get_id=True,
         )
 
-        update_query = """
-        UPDATE `polytronic-target-display`.`current`
+        update_query = f"""
+        UPDATE `{DATABASE}`.`current`
         SET series_id = ?
         WHERE target_number = ?;
         """
@@ -178,7 +196,10 @@ class InitTarget:
 
         if not self.current_serie_id:
             return
-        update_query = "UPDATE series SET `show` = ?, score_base10 = ?, score_base100 = ?, end_time = ? WHERE id = ?"
+        update_query = (
+            f"UPDATE `{DATABASE}`.series SET `show` = ?,"
+            " score_base10 = ?, score_base100 = ?, end_time = ? WHERE id = ?"
+        )
         score_base10 = sum(listScore(self.current_serie_id, "shots", max=10))
         score_base100 = sum(listScore(self.current_serie_id, "shots", max=100))
         self._execute_write(
@@ -193,7 +214,10 @@ class InitTarget:
             return
         score_base10 = sum(listScore(self.current_programm_id, "series", max=10))
         score_base100 = sum(listScore(self.current_programm_id, "series", max=100))
-        update_query = "UPDATE programm SET score_base10 = ?, score_base100 = ?, end_time = ? WHERE id = ?"
+        update_query = (
+            f"UPDATE `{DATABASE}`.programm SET score_base10 = ?,"
+            " score_base100 = ?, end_time = ? WHERE id = ?"
+        )
         self._execute_write(
             update_query,
             (score_base10, score_base100, time, self.current_programm_id),
@@ -208,14 +232,18 @@ class InitTarget:
         time: str,
         guid: str,
     ) -> None:
-        if not self.current_serie_id:
+        _, serie_id = get_current(self.target_number)
+        if serie_id is None:
             print("Erreur: Tentative d'ajout de tir sans série active.")
             return
 
-        insert_query = "INSERT INTO shots (x, y, time, score_base10, score_base100, series_id, GUID) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        insert_query = (
+            f"INSERT INTO `{DATABASE}`.shots (x, y, time,"
+            " score_base10, score_base100, series_id, GUID) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        )
         self._execute_write(
             insert_query,
-            (pos_x, pos_y, time, score_10, score_100, self.current_serie_id, guid),
+            (pos_x, pos_y, time, score_10, score_100, serie_id, guid),
         )
 
 
