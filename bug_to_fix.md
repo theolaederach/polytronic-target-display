@@ -14,8 +14,8 @@ Ces points cassent déjà le fonctionnement : à traiter en premier, ils tiennen
 - [x] `database/writer.py` : dans `start_serie`, si l'INSERT échoue, ne pas laisser les tirs suivants sur l'ancienne série (log + état cohérent)
 - [x] `listener.py` : entourer `analyse_data` d'un `try/except` par ligne avec un log, pour qu'une ligne mal formée ne tue plus le thread
 - [x] `listener.py` : vérifier `0 <= target_number < len(targets)` avant `targets[target_number]`
-- [ ] `server/api/shots.py` : valider `target` (entier, entre 1 et `NumberOfTarget`) ; renvoyer 400/404 au lieu d'une erreur 500 ; `target=0` ne doit plus viser la dernière cible
-- [ ] `server/routes/app_routes.py` : supprimer la route `/test` (le template `test.html` n'existe pas, erreur 500)
+- [x] `server/api/shots.py` : valider `target` (entier, entre 1 et `NumberOfTarget`) ; renvoyer 400/404 au lieu d'une erreur 500 ; `target=0` ne doit plus viser la dernière cible
+- [x] `server/routes/app_routes.py` : supprimer la route `/test` (le template `test.html` n'existe pas, erreur 500)
 - [x] `database/src/create structure.sql` : supprimer `DROP SCHEMA IF EXISTS` (relancer le script efface toutes les données)
 - [x] `database/src/create structure.sql` : retirer `VISIBLE` des index (syntaxe MySQL 8, probablement refusée par MariaDB — à tester sur un vrai serveur)
 - [x] `database/src/create structure.sql` : `shots.score_base10` en `VARCHAR(45)` → type entier ; corriger la faute `taget_number` (colonne, `writer.py` et `listener.py` à adapter ensemble)
@@ -25,22 +25,22 @@ Ces points cassent déjà le fonctionnement : à traiter en premier, ils tiennen
 
 Le listener et la base doivent survivre aux paquets étranges, aux doublons et aux connexions mortes.
 
-- [ ] `listener.py` : gérer plusieurs clients (un thread par connexion, `srv.listen(1)` bloque tout derrière un client)
-- [ ] `listener.py` : ajouter `settimeout` ou `SO_KEEPALIVE` pour qu'une connexion à moitié morte ne bloque plus le listener
-- [ ] `listener.py` : supprimer le code mort (fallback latin-1 jamais atteint avec `errors="replace"`, `except KeyboardInterrupt` inutile dans un thread)
-- [ ] Faire de la table `current` la seule source de vérité de l'état des cibles (le listener et Flask modifient aujourd'hui les mêmes `current_*` sans verrou)
-- [ ] Décider d'une stratégie pour les GUID : `UNIQUE` global → clé composite avec la date si le système de tir remet ses compteurs à zéro ; logger les doublons au lieu d'un simple `print`
+- [x] `listener.py` : gérer plusieurs clients (un thread par connexion, `srv.listen(1)` bloque tout derrière un client)
+- [x] `listener.py` : ajouter `settimeout` ou `SO_KEEPALIVE` pour qu'une connexion à moitié morte ne bloque plus le listener
+- [x] `listener.py` : supprimer le code mort (fallback latin-1 jamais atteint avec `errors="replace"`, `except KeyboardInterrupt` inutile dans un thread)
+- [x] Faire de la table `current` la seule source de vérité de l'état des cibles (le listener et Flask modifient aujourd'hui les mêmes `current_*` sans verrou)
+- [x] Décider d'une stratégie pour les GUID : `UNIQUE` global → clé composite avec la date si le système de tir remet ses compteurs à zéro ; logger les doublons au lieu d'un simple `print`
 - [ ] Stocker les heures avec la date (`DATETIME` au lieu de `TIME`) avant d'ajouter des statistiques sur plusieurs jours
-- [ ] Utiliser `DATABASE_NAME` dans `writer.py` au lieu du schéma `polytronic-target-display` écrit en dur
+- [x] Utiliser `DATABASE_NAME` dans `writer.py` au lieu du schéma `polytronic-target-display` écrit en dur
 
 ## Priorité 3 – Sécurité et déploiement
 
 Le plus urgent ici : le débogueur Flask est ouvert sur le réseau.
 
-- [ ] `server/app.py` : `debug=True` avec `host=0.0.0.0` expose le débogueur Werkzeug (exécution de code à distance) ; le rendre configurable dans `.env` avec `False` par défaut
+- [x] `server/app.py` : `debug=True` avec `host=0.0.0.0` expose le débogueur Werkzeug (exécution de code à distance) ; le rendre configurable dans `.env` avec `False` par défaut
 - [ ] Servir l'application avec waitress ou gunicorn en production
-- [ ] Restreindre le listener TCP à l'IP du système de tir (allowlist ou pare-feu) : aujourd'hui n'importe qui sur le réseau peut injecter des tirs
-- [ ] `main.py` : ne plus tester `.env` par chemin relatif (échoue depuis un autre dossier et exclut les variables d'environnement type Docker ou systemd)
+- [x] Restreindre le listener TCP à l'IP du système de tir (allowlist ou pare-feu) : aujourd'hui n'importe qui sur le réseau peut injecter des tirs
+- [x] `main.py` : ne plus tester `.env` par chemin relatif (échoue depuis un autre dossier et exclut les variables d'environnement type Docker ou systemd)
 
 ## Priorité 4 – Performance
 
