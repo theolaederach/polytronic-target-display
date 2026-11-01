@@ -28,6 +28,6 @@ def credits():
     return render_template("credits.html")
 
 
-@routes.route("/test")
-def test():
-    return render_template("test.html")
+# @routes.route("/test")
+# def test():
+#    return render_template("test.html")
