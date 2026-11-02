@@ -2,9 +2,6 @@
 
 test.*
 
-assets/*
-!assets/template.png
-!assets/font.ttf
 
 .venv/
 
@@ -19,5 +16,3 @@ htmlcov/
 
 dist/
 build/
-*.egg-info/
-/static/target*.png
