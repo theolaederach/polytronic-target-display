@@ -59,11 +59,11 @@ Aucun test n'existe ; la documentation contredit le code sur plusieurs points.
 
 **Tests et outillage**
 
-- [ ] Séparer le parsing de `analyse_data` de l'appel à la base, puis ajouter pytest (les lignes d'exemple en commentaire servent de cas de test)
+- [x] Séparer le parsing de `analyse_data` de l'appel à la base, puis ajouter pytest (les lignes d'exemple en commentaire servent de cas de test)
 - [ ] Ajouter une CI GitHub Actions avec ruff et pytest
 - [ ] Remplacer les `print` par `logging` ; corriger « Waring » (3 occurrences dans `reader.py`)
-- [ ] Ajouter des `__init__.py` dans `database/` et `server/`
-- [ ] Nettoyer le `.gitignore` (les lignes `assets/*` et `/static/target*.png` datent de l'ancienne structure)
+- [x] Ajouter des `__init__.py` dans `database/` et `server/`
+- [x] Nettoyer le `.gitignore` (les lignes `assets/*` et `/static/target*.png` datent de l'ancienne structure)
 
 **Dépendances**
 
