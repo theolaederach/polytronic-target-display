@@ -46,10 +46,10 @@ Le plus urgent ici : le débogueur Flask est ouvert sur le réseau.
 
 Chaque poll d'une cible ouvre environ 8 connexions MariaDB, toutes les 2 s, pour 5 cibles et chaque navigateur ouvert.
 
-- [ ] Utiliser un pool de connexions (`mariadb.ConnectionPool`) dans `database/connection.py`
-- [ ] Créer un endpoint unique `/api/targets` qui renvoie toutes les cibles en une requête
+- [x] Utiliser un pool de connexions (`mariadb.ConnectionPool`) dans `database/connection.py`
+- [x] Créer un endpoint unique `/api/targets` qui renvoie toutes les cibles en une requête
 - [ ] Regrouper les lectures (programme, série, tirs, score) en une requête SQL avec JOIN ; ne plus appeler `update()` 3 fois par poll
-- [ ] `update-target.js` : remplacer `setInterval` par un `setTimeout` récursif pour que les requêtes ne s'empilent pas si le serveur ralentit
+- [x] `update-target.js` : remplacer `setInterval` par un `setTimeout` récursif pour que les requêtes ne s'empilent pas si le serveur ralentit
 - [ ] `update-target.js` : ne redessiner que si les données ont changé (évite le clignotement)
 - [ ] À terme : passer le polling à SSE ou WebSocket
 
