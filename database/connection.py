@@ -10,8 +10,7 @@ from dotenv import load_dotenv
 
 _ = load_dotenv()
 
-port_str = os.getenv("DATABASE_PORT", "3306")
-PORT = int(port_str)
+PORT = int(os.getenv("DATABASE_PORT", "3306"))
 DATABASE = os.getenv("DATABASE_NAME", "polytronic-target-display")
 
 db_config = {
@@ -19,15 +18,27 @@ db_config = {
     "port": PORT,
     "user": os.getenv("DATABASE_USER"),
     "password": os.getenv("DATABASE_PASSWORD"),
-    "database": os.getenv("DATABASE_NAME"),
+    "database": DATABASE,
     "autocommit": False,  # commit are gered manualy
 }
+
+# Création d’un pool
+pool = mariadb.ConnectionPool(
+    pool_name="mariadb_pool",
+    pool_size=5,
+    host=os.getenv("DATABASE_URL", "localhost"),
+    port=PORT,
+    database=DATABASE,
+    user=os.getenv("DATABASE_USER"),
+    password=os.getenv("DATABASE_PASSWORD"),
+    autocommit=False,
+)
 
 
 def _get_connection() -> mariadb.Connection:
     """Create and return a new connection to the mariadb database"""
     try:
-        return mariadb.connect(**db_config)
+        return pool.get_connection()
     except mariadb.Error as e:
         print(f"Erreur de connexion à la base de données : {e}")
         raise
