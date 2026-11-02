@@ -11,29 +11,22 @@ from database.reader import (
     getTargetType,
     listLastShot,
 )
+from database.writer import targets
 
 api = Blueprint("api", __name__, template_folder="templates")
 
 
-@api.route("/shots", methods=["GET"])
-def get_shots():
-    raw_target = request.args.get("target")
-
-    if raw_target and raw_target.isdigit and int(raw_target) > 1:
-        target = int(raw_target) - 1
-        raw_data = listLastShot(target)
-    else:
-        return {"message": "ERROR, invalid target number", "target": raw_target}, 400
-
+def json_shots(target: int) -> dict:
+    data_list = listLastShot(target)
     # Processing the tuple for js : [{ "x": -0.12, "y": 0.200, "number": 1, "score": 56 }, ...]
     shots = [
         {
             "x": x,
             "y": y,
-            "number": len(raw_data) - i,
+            "number": len(data_list) - i,
             "score": score,
         }
-        for i, (x, y, score) in enumerate(raw_data)
+        for i, (x, y, score) in enumerate(data_list)
     ]
 
     reponse = {
@@ -43,10 +36,27 @@ def get_shots():
         "shots": shots,
     }
 
-    return jsonify(reponse)
+    return reponse
+
+
+@api.route("/shots", methods=["GET"])
+def get_shots():
+    raw_target = request.args.get("target")
+
+    if raw_target and raw_target.isdigit and int(raw_target) > 1:
+        target = int(raw_target) - 1
+    else:
+        return {"message": "ERROR, invalid target number", "target": raw_target}, 400
+
+    return jsonify(json_shots(target))
 
 
 @api.route("/targets", methods=["GET"])
 def get_all_targets():
-    return
-$
+    list_of_last_shots: list[dict] = []
+
+    for t in targets:
+        list_of_last_shots.append(json_shots(t.target_number))
+
+    reponse = {"targets": list_of_last_shots}
+    return jsonify(reponse)
