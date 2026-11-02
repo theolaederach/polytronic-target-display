@@ -1,7 +1,6 @@
 # main.py
 import argparse
 import os
-import sys
 import threading
 
 from dotenv import load_dotenv

@@ -19,7 +19,7 @@ api = Blueprint("api", __name__, template_folder="templates")
 def get_shots():
     raw_target = request.args.get("target")
 
-    if raw_target and raw_target.isdigit and int(raw_target) < 0:
+    if raw_target and raw_target.isdigit and int(raw_target) > 1:
         target = int(raw_target) - 1
         raw_data = listLastShot(target)
     else:
@@ -44,3 +44,9 @@ def get_shots():
     }
 
     return jsonify(reponse)
+
+
+@api.route("/targets", methods=["GET"])
+def get_all_targets():
+    return
+$
