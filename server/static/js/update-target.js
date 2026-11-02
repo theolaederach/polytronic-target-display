@@ -4,7 +4,7 @@
 // Description : Fetch shots for each target every second and draw crosshairs.
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-const API_BASE_URL = "/api/shots";
+const API_BASE_URL = "/api/targets/all";
 const REFRESH_INTERVAL = 2000; // 1 seconde
 
 // Configuration graphique
@@ -113,12 +113,13 @@ function drawShotsOnSvg(svgElement, shots) {
  * @param {string} targetId - L'identifiant de la cible (ex: "1", "2", "other")
  * @param {HTMLElement} svgElement - L'élément SVG DOM à mettre à jour
  */
-async function updateTarget(targetId, svgElement) {
-  try {
-    // Construction de l'URL avec le paramètre target
-    // Si targetId est "other", on peut décider d'envoyer "other" ou un numéro spécifique selon votre API
-    const url = `${API_BASE_URL}?target=${targetId}`;
 
+/**
+ * Fonction principale lancée toutes les secondes
+ */
+async function refreshAllTargets() {
+  const url = `${API_BASE_URL}`;
+  try {
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -128,60 +129,51 @@ async function updateTarget(targetId, svgElement) {
     });
 
     if (!response.ok) {
-      // Si l'API renvoie une erreur (ex: 404), on nettoie juste et on arrête pour cette cible
-      if (response.status !== 404) {
-        console.warn(
-          `Erreur API pour la cible ${targetId}: ${response.status}`,
-        );
-      }
+      console.warn(`Erreur API pour /targets/all : ${response.status}`);
       return;
     }
 
-    const target_info = await response.json();
-    shots = target_info.shots;
-    drawShotsOnSvg(svgElement, shots);
-    if (shots && shots.length > 0) {
-      const targetType = target_info.target_type;
-      const image = svgElement.querySelector("image");
-      if (image) {
-        image.setAttribute("href", `/static/assets/target_${targetType}.png`);
+    const data = await response.json();
+    const targetsData = data.targets;
+
+    const targetSelectors = [
+      { id: "1", selector: ".target1" },
+      { id: "2", selector: ".target2" },
+      { id: "3", selector: ".target3" },
+      { id: "4", selector: ".target4" },
+      { id: "5", selector: ".target5" },
+      { id: "other", selector: ".other" },
+    ];
+
+    targetsData.forEach((targetInfo, idx) => {
+      const selectorObj = targetSelectors[idx];
+      if (!selectorObj) return;
+
+      const container = document.querySelector(selectorObj.selector);
+      if (container) {
+        const svgElement = container.querySelector("svg");
+        if (svgElement) {
+          drawShotsOnSvg(svgElement, targetInfo.shots);
+          if (targetInfo.shots && targetInfo.shots.length > 0) {
+            const targetType = targetInfo.target_type;
+            const image = svgElement.querySelector("image");
+            if (image) {
+              image.setAttribute(
+                "href",
+                `/static/assets/target_${targetType}.png`,
+              );
+            }
+          }
+        } else {
+          console.warn(
+            `SVG non trouvé dans le conteneur ${selectorObj.selector}`,
+          );
+        }
       }
-    }
+    });
   } catch (error) {
-    console.error(
-      `Erreur lors de la mise à jour de la cible ${targetId} :`,
-      error,
-    );
+    console.error("Erreur lors de la mise à jour des cibles :", error);
   }
-}
-
-/**
- * Fonction principale lancée toutes les secondes
- */
-function refreshAllTargets() {
-  // Liste des cibles à mettre à jour
-  // On cible les classes .target1, .target2... et .other
-  const targetSelectors = [
-    { id: "1", selector: ".target1" },
-    { id: "2", selector: ".target2" },
-    { id: "3", selector: ".target3" },
-    { id: "4", selector: ".target4" },
-    { id: "5", selector: ".target5" },
-    { id: "other", selector: ".other" },
-  ];
-
-  targetSelectors.forEach((item) => {
-    const container = document.querySelector(item.selector);
-    if (container) {
-      // On cherche le SVG à l'intérieur de ce conteneur
-      const svgElement = container.querySelector("svg");
-      if (svgElement) {
-        updateTarget(item.id, svgElement);
-      } else {
-        console.warn(`SVG non trouvé dans le conteneur ${item.selector}`);
-      }
-    }
-  });
 }
 
 // Démarrage
@@ -190,7 +182,12 @@ document.addEventListener("DOMContentLoaded", () => {
   refreshAllTargets();
 
   // Puis rafraîchissement toutes les secondes
-  setInterval(refreshAllTargets, REFRESH_INTERVAL);
+  // Use recursive setTimeout to avoid overlapping requests
+  async function loop() {
+    await refreshAllTargets();
+    setTimeout(loop, REFRESH_INTERVAL);
+  }
+  loop();
 
   console.log(
     `Système de mise à jour des cibles démarré (${REFRESH_INTERVAL}s interval)`,

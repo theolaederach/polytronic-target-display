@@ -39,19 +39,21 @@ def json_shots(target: int) -> dict:
     return reponse
 
 
-@api.route("/shots", methods=["GET"])
+@api.route("/targets", methods=["GET"])
 def get_shots():
     raw_target = request.args.get("target")
 
-    if raw_target and raw_target.isdigit and int(raw_target) > 1:
+    if raw_target and raw_target.isdigit() and int(raw_target) > 0:
         target = int(raw_target) - 1
     else:
-        return {"message": "ERROR, invalid target number", "target": raw_target}, 400
+        return jsonify(
+            {"message": "ERROR, invalid target number", "target": raw_target}
+        ), 400
 
     return jsonify(json_shots(target))
 
 
-@api.route("/targets", methods=["GET"])
+@api.route("/targets/all", methods=["GET"])
 def get_all_targets():
     list_of_last_shots: list[dict] = []
 
