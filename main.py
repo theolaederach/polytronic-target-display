@@ -1,11 +1,19 @@
 # main.py
 import argparse
+import logging
 import os
 import threading
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logging.basicConfig(
+    level=logging.NOTSET,
+    format="%(asctime)s %(levelname)-8s %(name)s : %(message)s",
+    force=True,
+)
+logger = logging.getLogger(__name__)
 
 
 def get_args():
@@ -76,12 +84,13 @@ if __name__ == "__main__":
             kwargs={"host": args.listen_ip, "port": args.listen_port},
             daemon=True,
         )
-        listener_thread.start()
-        print(
-            f"[INFO] Listener TCP démarré sur {args.listen_ip}:{args.listen_port} "
-            f"(thread {listener_thread.name})"
+        logger.info(
+            "[INFO] Listener TCP démarré sur %s:%s (thread %r)",
+            args.listen_ip,
+            args.listen_port,
+            listener_thread.name,
         )
-
+        listener_thread.start()
     if not args.listener_only:
         from server import app
 

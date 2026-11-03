@@ -96,14 +96,16 @@ class InitTarget:
             else:
                 return None
 
-        except mariadb.IntegrityError as e:
-            print(f"Erreur d'intégrité (doublon ?) : {e}")
+        except mariadb.IntegrityError:
+            logger.error(
+                "DB writing error (duplicate ?) (query=%s, args=%s)", query[:40], params
+            )
             if conn:
                 conn.rollback()
             return None
 
-        except mariadb.Error as e:
-            print(f"Erreur écriture DB : {e}")
+        except mariadb.Error:
+            logger.exception("DB writing error (query=%s)", query[:40])
             if conn:
                 conn.rollback()
             return None
@@ -133,9 +135,10 @@ class InitTarget:
 
         if new_id is None:
             # INSERT failed (duplicate GUID, DB down...) : keep the previous state
-            print(
-                f"Erreur : programme non enregistré (cible {self.target_number}, "
-                f"guid {guid}), état précédent conservé."
+            logger.error(
+                "Programm not save (target %r, programm guid : %r",
+                self.target_number,
+                guid,
             )
             return
 
@@ -155,7 +158,9 @@ class InitTarget:
 
         programm_id, _ = get_current(self.target_number)
         if programm_id is None:
-            print(f"Erreur : série sans programme actif (cible {self.target_number})")
+            logger.error(
+                "Serie without active programm (target %r)", self.target_number
+            )
             return
 
         insert_query = (
@@ -178,9 +183,10 @@ class InitTarget:
 
         if new_id is None:
             # INSERT failed (duplicate GUID, DB down...) : keep the previous state
-            print(
-                f"Erreur : serie non enregistré (cible {self.target_number}, "
-                f"guid {guid}), état précédent conservé."
+            logger.error(
+                "Serie not save (target %r, serie guid : %r",
+                self.target_number,
+                guid,
             )
             # update the current serie id ans et it to None
             self._execute_write(update_query, (None, self.target_number))
@@ -234,7 +240,10 @@ class InitTarget:
     ) -> None:
         _, serie_id = get_current(self.target_number)
         if serie_id is None:
-            print("Erreur: Tentative d'ajout de tir sans série active.")
+            logger.error(
+                "unable to insert a shot without active serie. (target %r)",
+                self.target_number,
+            )
             return
 
         insert_query = (

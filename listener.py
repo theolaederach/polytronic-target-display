@@ -1,4 +1,5 @@
 import csv
+import logging
 import os
 import socket
 import sys
@@ -15,6 +16,8 @@ PORT = int(port_str)
 
 HOST = os.getenv("HOST_LISTENER", "0.0.0.0")
 
+logger = logging.getLogger(__name__)
+
 
 def listen(host: str = HOST, port: int = PORT) -> None:
     """Start a blocking TCP server that prints each received line.
@@ -30,12 +33,14 @@ def listen(host: str = HOST, port: int = PORT) -> None:
         srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         srv.bind((host, port))
         srv.listen(5)
-        print(f"Listening on {host}:{port} …")
+        logger.debug("Listening on %s : %s …", host, port)
         try:
             while True:
                 conn, addr = srv.accept()
                 if addr[0] not in ALLOWED_IPS:
-                    print(f"Rejected connection from unauthorized IP {addr[0]}")
+                    logger.warning(
+                        "Rejected connection from unauthorized IP %r", addr[0]
+                    )
                     conn.close()
                     continue
                 t = threading.Thread(
@@ -43,13 +48,13 @@ def listen(host: str = HOST, port: int = PORT) -> None:
                 )
                 t.start()
         except KeyboardInterrupt:
-            print("\nServer stopped by user.")
+            logger.critical("\nServer stopped by user.")
             sys.exit(0)
 
 
 def handle_connection(conn, addr):
     """Process a single client connection in its own thread."""
-    print(f"[Thread] Connected: {addr[0]}:{addr[1]}")
+    logger.info("[Thread] Connected %s : %S", addr[0], addr[1])
     try:
         with conn.makefile("rb") as f:
             for raw_line in f:
@@ -58,11 +63,11 @@ def handle_connection(conn, addr):
                     analyse_data(line)
                 except IndexError as e:
                     print(line, e)
-    except Exception as e:
-        print(f"Connection error {addr}: {e}")
+    except Exception:
+        logger.exception("Connection error %r", addr)
     finally:
         conn.close()
-        print(f"[Thread] Disconnected: {addr[0]}:{addr[1]}")
+        logger.info("[Thread] Disconncted %s : %S", addr[0], addr[1])
 
 
 def analyse_data(data: str = "") -> None:
@@ -77,7 +82,7 @@ def analyse_data(data: str = "") -> None:
     ):
         target_number = int(row[1])  # base‑0 index
         if not (0 <= target_number < len(targets)):
-            print("target number invalid in the listener :", target_number)
+            logger.error("target number invalid in the listener : %r", target_number)
             return
         shooter_number = int(row[3])
     else:
@@ -107,7 +112,8 @@ def analyse_data(data: str = "") -> None:
             guid = row[20]
             targets[target_number].shot(pos_x, pos_y, score_10, score_100, time, guid)
     except IndentationError as e:
-        print(e, row)
-    except Exception as e:
-        print(e)
-        raise
+        logger.error(e, row)
+        return
+    except Exception:
+        logger.exception("something wrong with the listener")
+        return

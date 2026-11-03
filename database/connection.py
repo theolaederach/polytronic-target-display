@@ -3,12 +3,14 @@
 # Last update : 17.09.2026
 # Description : Module for open the connection to the database.
 
+import logging
 import os
 
 import mariadb
 from dotenv import load_dotenv
 
 _ = load_dotenv()
+logger = logging.getLogger(__name__)
 
 PORT = int(os.getenv("DATABASE_PORT", "3306"))
 DATABASE = os.getenv("DATABASE_NAME", "polytronic-target-display")
@@ -40,6 +42,7 @@ def _get_connection() -> mariadb.Connection:
     try:
         return pool.get_connection()
     except mariadb.Error as e:
+        logger.fatal("Can't connect to the database !")
         print(f"Erreur de connexion à la base de données : {e}")
         raise
 
