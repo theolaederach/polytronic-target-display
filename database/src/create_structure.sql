@@ -2,15 +2,20 @@
 -- mar 27 oct 2026 20:04:34
 -- Model: New Model    Version: 1.5
 -- MySQL Workbench Forward Engineering
+--
+-- Modification : le GUID n'est plus unique globalement (le systeme de tir
+-- le reutilise a d'autres moments et sur d'autres cibles). L'unicite est
+-- maintenant calculee avec le "parent" du GUID :
+--   programm : (cible, GUID, heure de debut)
+--   series   : (programme, GUID)
+--   shots    : (serie, GUID)
+-- Un paquet renvoye deux fois reste refuse, un GUID reutilise ailleurs passe.
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
--- -----------------------------------------------------
--- Schema polytronic-target-display
--- -----------------------------------------------------
-DROP SCHEMA IF EXISTS `polytronic-target-display` ;
+
 
 -- -----------------------------------------------------
 -- Schema polytronic-target-display
@@ -30,11 +35,11 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`programm` (
   `taget_number` TINYINT NOT NULL,
   `shooters_number` INT NULL,
   `target_type` VARCHAR(4) NULL,
-  `start_time` TIME NULL,
-  `end_time` TIME NULL,
+  `start_time` TIME(2) NOT NULL,
+  `end_time` TIME(2) NULL,
   `GUID` VARCHAR(10) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `GUID_UNIQUE` (`GUID` ASC) VISIBLE)
+  UNIQUE INDEX `target_guid_start_UNIQUE` (`taget_number` ASC, `GUID` ASC, `start_time` ASC) )
 ENGINE = InnoDB;
 
 
@@ -50,12 +55,11 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`series` (
   `programm_id` INT NOT NULL,
   `type` INT(3) NOT NULL,
   `show` TINYINT(1) NOT NULL,
-  `start_time` TIME NULL,
-  `end_time` TIME NULL,
+  `start_time` TIME(2) NULL,
+  `end_time` TIME(2) NULL,
   `GUID` VARCHAR(10) NOT NULL,
   PRIMARY KEY (`id`),
-  INDEX `fk_pass_programm1_idx` (`programm_id` ASC) VISIBLE,
-  UNIQUE INDEX `GUID_UNIQUE` (`GUID` ASC) VISIBLE,
+  UNIQUE INDEX `programm_guid_UNIQUE` (`programm_id` ASC, `GUID` ASC) ,
   CONSTRAINT `fk_pass_programm1`
     FOREIGN KEY (`programm_id`)
     REFERENCES `polytronic-target-display`.`programm` (`id`)
@@ -73,14 +77,13 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`shots` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `x` DECIMAL(4,3) NOT NULL,
   `y` DECIMAL(4,3) NOT NULL,
-  `time` TIME NULL,
-  `score_base10` VARCHAR(45) NULL,
+  `time` TIME(2) NULL,
+  `score_base10` TINYINT(10)  NULL,
   `score_base100` TINYINT(100) NULL,
   `series_id` INT NOT NULL,
   `GUID` VARCHAR(10) NOT NULL,
   PRIMARY KEY (`id`),
-  INDEX `fk_shots_series_idx` (`series_id` ASC) VISIBLE,
-  UNIQUE INDEX `GUID_UNIQUE` (`GUID` ASC) VISIBLE,
+  UNIQUE INDEX `series_guid_UNIQUE` (`series_id` ASC, `GUID` ASC) ,
   CONSTRAINT `fk_shots_passe1`
     FOREIGN KEY (`series_id`)
     REFERENCES `polytronic-target-display`.`series` (`id`)
@@ -99,9 +102,8 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`current` (
   `programm_id` INT NULL,
   `series_id` INT NULL,
   PRIMARY KEY (`target_number`),
-  INDEX `fk_current_programm1_idx` (`programm_id` ASC) VISIBLE,
-  INDEX `fk_current_series1_idx` (`series_id` ASC) VISIBLE,
-  UNIQUE INDEX `target_number_UNIQUE` (`target_number` ASC) VISIBLE,
+  INDEX `fk_current_programm1_idx` (`programm_id` ASC) ,
+  INDEX `fk_current_series1_idx` (`series_id` ASC) ,
   CONSTRAINT `fk_current_programm1`
     FOREIGN KEY (`programm_id`)
     REFERENCES `polytronic-target-display`.`programm` (`id`)

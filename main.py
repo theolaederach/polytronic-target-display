@@ -1,12 +1,19 @@
 # main.py
 import argparse
+import logging
 import os
-import sys
 import threading
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logging.basicConfig(
+    level=logging.NOTSET,
+    format="%(asctime)s %(levelname)-8s %(name)s : %(message)s",
+    force=True,
+)
+logger = logging.getLogger(__name__)
 
 
 def get_args():
@@ -28,6 +35,12 @@ def get_args():
         type=int,
         default=int(os.getenv("PORT_WEB_SERVER", "5000")),
         help="Setup the port of the web server, DEFAULT 5000",
+    )
+    parser.add_argument(
+        "--debug",
+        type=bool,
+        default=False,
+        help="Set the web server (Flask) into debug mode",
     )
 
     # Listener settings
@@ -51,11 +64,6 @@ def get_args():
 
 
 if __name__ == "__main__":
-    #check if the .env file exist
-    if not os.path.exists(".env"):
-        print(".env file not found. Exiting.")
-        sys.exit(1)
-
     args = get_args()
     if args.web_server_only and args.listener_only:
         raise argparse.ArgumentError(
@@ -76,12 +84,13 @@ if __name__ == "__main__":
             kwargs={"host": args.listen_ip, "port": args.listen_port},
             daemon=True,
         )
-        listener_thread.start()
-        print(
-            f"[INFO] Listener TCP démarré sur {args.listen_ip}:{args.listen_port} "
-            f"(thread {listener_thread.name})"
+        logger.info(
+            "[INFO] Listener TCP démarré sur %s:%s (thread %r)",
+            args.listen_ip,
+            args.listen_port,
+            listener_thread.name,
         )
-
+        listener_thread.start()
     if not args.listener_only:
         from server import app
 

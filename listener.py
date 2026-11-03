@@ -1,36 +1,22 @@
-"""
-Database socket receiver
-========================
-
-This simple script listens on TCP port 4000 on all interfaces and prints
-incoming data line‑by‑line.
-
-It is deliberately minimal – the intention is that later on a dedicated
-function will replace the `print` call to process the data.
-
-Usage
------
-
-```
-python -m database.receiver
-```
-
-The server will keep running until it receives a keyboard interrupt.
-"""
-
 import csv
+import logging
 import os
 import socket
 import sys
+import threading
 from datetime import datetime
 from io import StringIO
 
 from database.writer import targets
 
+ALLOWED_IPS = os.getenv("ALLOWED_IPS_LISTENER", "127.0.0.1").split(",")
+
 port_str = os.getenv("PORT_LISTENER", "4000")
 PORT = int(port_str)
 
-HOST = os.getenv("URL_LISTENER", "0.0.0.0")
+HOST = os.getenv("HOST_LISTENER", "0.0.0.0")
+
+logger = logging.getLogger(__name__)
 
 
 def listen(host: str = HOST, port: int = PORT) -> None:
@@ -46,37 +32,58 @@ def listen(host: str = HOST, port: int = PORT) -> None:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as srv:
         srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         srv.bind((host, port))
-        srv.listen(1)
-        print(f"Listening on {host}:{port} …")
+        srv.listen(5)
+        logger.debug("Listening on %s : %s …", host, port)
         try:
             while True:
                 conn, addr = srv.accept()
-                print(f"Accepted connection from {addr[0]}:{addr[1]}")
-                with conn.makefile("rb") as f:
-                    for raw_line in f:
-                        # Decode with fallback to latin‑1 if utf‑8 fails
-                        try:
-                            line = raw_line.decode("utf-8", errors="replace")
-                        except UnicodeDecodeError:
-                            line = raw_line.decode("latin-1", errors="replace")
-
-                        analyse_data(line)
-
+                if addr[0] not in ALLOWED_IPS:
+                    logger.warning(
+                        "Rejected connection from unauthorized IP %r", addr[0]
+                    )
+                    conn.close()
+                    continue
+                t = threading.Thread(
+                    target=handle_connection, args=(conn, addr), daemon=True
+                )
+                t.start()
         except KeyboardInterrupt:
-            print("\nServer stopped by user.")
+            logger.critical("\nServer stopped by user.")
             sys.exit(0)
 
 
+def handle_connection(conn, addr):
+    """Process a single client connection in its own thread."""
+    logger.info("[Thread] Connected %s : %S", addr[0], addr[1])
+    try:
+        with conn.makefile("rb") as f:
+            for raw_line in f:
+                line = raw_line.decode("utf-8", errors="replace")
+                try:
+                    analyse_data(line)
+                except IndexError as e:
+                    print(line, e)
+    except Exception:
+        logger.exception("Connection error %r", addr)
+    finally:
+        conn.close()
+        logger.info("[Thread] Disconncted %s : %S", addr[0], addr[1])
+
+
 def analyse_data(data: str = "") -> None:
+    """Parse and dispatch the packet to the appropriate handler."""
     reader = csv.reader(StringIO(data), delimiter=";")
     row = next(reader)
     if row == []:
         return
-    dataType = row[0]  # (_SHOT, _GRPH)
+    dataType = row[0]  # (_SHOT, _GRPH, etc.)
     if {"_PRCH": True, "_GRPH": True, "_SUBT": True, "_PRST": True, "_SHOT": True}.get(
         dataType
     ):
-        target_number = int(row[1])  # target number base 0
+        target_number = int(row[1])  # base‑0 index
+        if not (0 <= target_number < len(targets)):
+            logger.error("target number invalid in the listener : %r", target_number)
+            return
         shooter_number = int(row[3])
     else:
         return
@@ -87,43 +94,26 @@ def analyse_data(data: str = "") -> None:
 
     try:
         if dataType == "_PRCH":
-            # Begin of a programm
-            # _PRCH;3;4;1839;60;2;12:08:43.74;0;0;4;0;0;0;82;4;0;0;1839;0;0;0;0;0;0;0;2199063379
             guid = row[25]
-
             targets[target_number].start_programm(shooter_number, time, guid)
-
         elif dataType == "_GRPH":
-            # Begin of a serie
-            # _GRPH;3;4;1839;60;101;12:26:52.69;8;0;0;1;0;0;1;2199172266
             series_type = int(row[9])
             guid = row[14]
-
             targets[target_number].start_serie(series_type, time, guid)
-
         elif dataType == "_SUBT":
-            # End of a serie
-            # _SUBT;3;4;1839;60;110;12:27:27.27;7;0;66;626;2199175750
-
             targets[target_number].serie_finish(time)
-
         elif dataType == "_PRST":
-            # End of a programm
-            # _PRST;3;4;1839;51;0
             targets[target_number].programm_finish(time)
-
         elif dataType == "_SHOT":
-            # record a shot
-            # _SHOT;3;4;1839;60;109;12:27:26.71;3;0;2048;8;74;0;8;0.11861770;0.06816363;900;0;0;655.35;2199175643;1;800;35
             pos_x = float(row[14])
             pos_y = float(row[15])
             score_10 = int(row[10])
             score_100 = int(row[11])
             guid = row[20]
-
             targets[target_number].shot(pos_x, pos_y, score_10, score_100, time, guid)
     except IndentationError as e:
-        print(e, row)
-    except Exception as e:
-        print(e)
-        raise
+        logger.error(e, row)
+        return
+    except Exception:
+        logger.exception("something wrong with the listener")
+        return

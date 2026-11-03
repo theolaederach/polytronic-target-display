@@ -4,7 +4,7 @@
 # Description : Module for read the database with function like listScore()
 
 from database.connection import execute_request
-from database.writer import targets
+from database.writer import get_current
 
 
 def listLastShot(target_number: int) -> list[tuple[float, float, int]]:
@@ -13,37 +13,26 @@ def listLastShot(target_number: int) -> list[tuple[float, float, int]]:
 
     (to do later, i'm too busy now)
     """
-    targets[target_number].update()
-
-    # Checking Whether the Target Exists in the Global List
-    try:
-        current_id = targets[target_number].current_serie_id
-    except (IndexError, AttributeError):
-        print(f"Waring : Target {target_number} uninitialised or not found.")
-        return []
-
-    if not current_id:
-        return []
+    _, serie_id = get_current(target_number)
 
     shots: list[tuple[float, float, int]] = []
 
     # get the info of the series
-    request = "SELECT id, `show` FROM series WHERE id = ?"
-    reponse = execute_request(request, (current_id,))
+    request = "SELECT `show` FROM series WHERE id = ?"
+    reponse = execute_request(request, (serie_id,))
     if reponse:
         result_seri = reponse[0]
     else:
         return []
 
-    serie_id = int(result_seri[0])
-    showed = result_seri[1]
+    showed = result_seri[0]
 
     # Is the series is hidden (show=0), we return nothing
     if showed == 0:
         return []
 
     # Get the shots
-    request = "SELECT x, y,score_base100 FROM shots WHERE series_id = ?"
+    request = "SELECT x, y,score_base100 FROM shots WHERE series_id = ? order by id"
     reponse = execute_request(request, (serie_id,))
 
     if reponse:
@@ -106,8 +95,8 @@ def listScore(parent_id: int, type: str, max: int = 10) -> list[int]:
 
 
 def getShooterNumber(target_number: int) -> int | None:
-    targets[target_number].update()
-    programm_id = targets[target_number].current_programm_id
+    programm_id, _ = get_current(target_number)
+
     request = "SELECT p.shooters_number FROM programm p WHERE p.id = ?;"
 
     reponse = execute_request(request, (programm_id,))
@@ -124,12 +113,7 @@ def getScoreSeriesOnTarget(target_number: int) -> int | None:
     Function description :
     To do later too, i'm still too busy
     """
-    targets[target_number].update()
-    try:
-        serie_id = targets[target_number].current_serie_id
-    except (IndexError, AttributeError):
-        print(f"Waring : Target {target_number} uninitialised or not found.")
-        return None
+    _, serie_id = get_current(target_number)
 
     if not serie_id:
         return None
@@ -142,11 +126,7 @@ def getTargetType(target_number: int) -> str:
     Function description :
     To do later too, i'm still too busy
     """
-    try:
-        programm_id = targets[target_number].current_programm_id
-    except (IndexError, AttributeError):
-        print(f"Waring : Target {target_number} uninitialised or not found.")
-        return "A10"
+    programm_id, _ = get_current(target_number)
 
     if not programm_id:
         return "A10"
