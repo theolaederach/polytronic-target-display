@@ -61,14 +61,14 @@ Aucun test n'existe ; la documentation contredit le code sur plusieurs points.
 
 - [x] Séparer le parsing de `analyse_data` de l'appel à la base, puis ajouter pytest (les lignes d'exemple en commentaire servent de cas de test)
 - [ ] Ajouter une CI GitHub Actions avec ruff et pytest
-- [ ] Remplacer les `print` par `logging` ; corriger « Waring » (3 occurrences dans `reader.py`)
+- [x] Remplacer les `print` par `logging` ; corriger « Waring » (3 occurrences dans `reader.py`)
 - [x] Ajouter des `__init__.py` dans `database/` et `server/`
 - [x] Nettoyer le `.gitignore` (les lignes `assets/*` et `/static/target*.png` datent de l'ancienne structure)
 
 **Dépendances**
 
-- [ ] `requirements.txt` : remplacer `dotenv` par `python-dotenv`, retirer `setuptools`, versionner les paquets
-- [ ] Documenter que le paquet `mariadb` exige la bibliothèque C MariaDB Connector (ou passer à PyMySQL)
+- [x] `requirements.txt` : remplacer `dotenv` par `python-dotenv`, retirer `setuptools`, versionner les paquets
+- [x] Documenter que le paquet `mariadb` exige la bibliothèque C MariaDB Connector (ou passer à PyMySQL)
 
 **Documentation**
 
