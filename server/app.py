@@ -6,7 +6,7 @@
 
 from flask import Flask
 
-from server.api.shots import api
+from server.api import api
 from server.routes.app_routes import routes
 
 app = Flask(__name__)

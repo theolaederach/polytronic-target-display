@@ -4,7 +4,7 @@
 // Description : Fetch shots for each target every second and draw crosshairs.
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-const API_BASE_URL = "/api/targets/all";
+const API_BASE_URL = "/api/shots/targets/all";
 const REFRESH_INTERVAL = 2000; // 1 seconde
 
 // Configuration graphique
