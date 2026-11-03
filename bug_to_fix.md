@@ -72,8 +72,8 @@ Aucun test n'existe ; la documentation contredit le code sur plusieurs points.
 
 **Documentation**
 
-- [ ] README : remplacer `python app.py` par `python main.py`
-- [ ] README : corriger le chemin du fichier SQL et ajouter `HOST_WEB_SERVER` et `PORT_WEB_SERVER` au tableau des variables
+- [x] README : remplacer `python app.py` par `python main.py`
+- [x] README : corriger le chemin du fichier SQL et ajouter `HOST_WEB_SERVER` et `PORT_WEB_SERVER` au tableau des variables
 - [ ] `doc.md` : l'API renvoie un objet (`shooter_number`, `target_type`, `total_score`, `shots`), pas un tableau
 - [ ] `doc.md` : corriger « 1 = most recent » (c'est l'inverse) et aligner la roadmap avec celle du README
 
