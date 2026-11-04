@@ -22,6 +22,21 @@ def get_current(target_number: int) -> tuple[int | None, int | None]:
     return (rows[0][0], rows[0][1]) if rows else (None, None)
 
 
+def getShooterByNumber(shooter_number: int) -> tuple[int, str]:
+    request = "SELECT s.id, s.name from shooters s WHERE  s.shooter_number = ?;"
+
+    result = execute_request(request, (shooter_number,))
+    if result:
+        try:
+            id = int(result[0][0])
+            name = result[0][1]
+            return (id, name)
+        except TypeError:
+            return (0, "???")
+    else:
+        return (0, "???")
+
+
 class InitTarget:
     """
     State manager and writer for a specific target.
@@ -115,6 +130,20 @@ class InitTarget:
             if conn:
                 conn.close()
 
+    def write_shooter(self, shooter_number: int, shooter_name: str) -> None:
+        """
+        Create a new shooter related to his shooter number with his name,
+        or edit his name if the value from the listener change.
+        """
+        insert_query = (
+            "INSERT INTO `polytronic-target-display`.shooters (shooter_number, name) "
+            "VALUES (?, ?) "
+            "ON DUPLICATE KEY UPDATE"
+            "    name = VALUES(name);"
+        )
+
+        _ = self._execute_write(insert_query, (shooter_number, shooter_name))
+
     def start_programm(
         self, shooter_number: int, time: str, guid: str, target_type: str = "A10"
     ) -> None:
@@ -124,19 +153,20 @@ class InitTarget:
         self.programm_finish(time)
 
         insert_query = (
-            f"INSERT INTO `{DATABASE}`.programm (shooters_number, taget_number, target_type, "
+            f"INSERT INTO `{DATABASE}`.programm (shooters_id, taget_number, target_type, "
             "start_time, GUID) VALUES (?, ?, ?, ?, ?)"
         )
+        shooter_id, _ = getShooterByNumber(shooter_number)
         new_id = self._execute_write(
             insert_query,
-            (shooter_number, self.target_number, target_type, time, guid),
+            (shooter_id, self.target_number, target_type, time, guid),
             get_id=True,
         )
 
         if new_id is None:
             # INSERT failed (duplicate GUID, DB down...) : keep the previous state
             logger.error(
-                "Programm not save (target %r, programm guid : %r",
+                "Programm not save (target %r, programm guid : %r)",
                 self.target_number,
                 guid,
             )

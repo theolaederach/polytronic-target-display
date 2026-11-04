@@ -23,6 +23,22 @@ SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,N
 CREATE SCHEMA IF NOT EXISTS `polytronic-target-display` ;
 USE `polytronic-target-display` ;
 
+
+-- -----------------------------------------------------
+-- Table `polytronic-target-display`.shooters
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `polytronic-target-display`.`shooters`;
+
+CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`shooters` (
+	id INT auto_increment NOT NULL,
+	shooter_number INT NOT NULL,
+	name varchar(100) NULL,
+	CONSTRAINT shooters_pk PRIMARY KEY (id),
+	CONSTRAINT shooters_unique UNIQUE KEY (shooter_number)
+)
+ENGINE=InnoDB;
+
+
 -- -----------------------------------------------------
 -- Table `polytronic-target-display`.`programm`
 -- -----------------------------------------------------
@@ -33,13 +49,18 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`programm` (
   `score_base10` SMALLINT UNSIGNED NULL,
   `score_base100` SMALLINT UNSIGNED NULL,
   `taget_number` TINYINT NOT NULL,
-  `shooters_number` INT NULL,
+  `shooters_id` INT NULL,
   `target_type` VARCHAR(4) NULL,
   `start_time` TIME(2) NOT NULL,
   `end_time` TIME(2) NULL,
   `GUID` VARCHAR(10) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `target_guid_start_UNIQUE` (`taget_number` ASC, `GUID` ASC, `start_time` ASC) )
+  UNIQUE INDEX `target_guid_start_UNIQUE` (`taget_number` ASC, `GUID` ASC, `start_time` ASC) ,
+  CONSTRAINT `programm_shooters_FK`
+    FOREIGN KEY (shooters_id)
+    REFERENCES `polytronic-target-display`.`shooters` (id)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
