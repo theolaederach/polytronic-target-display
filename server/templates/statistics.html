@@ -24,5 +24,17 @@
                 <li><a href="/credits">Credits</a></li>
             </ul>
         </nav>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="{{ url_for('static', filename='js/statistics.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/graphs.js') }}"></script>
+
+        <div class="content parent">
+            <div class="container">
+                <form>
+                    <label for="shooter_selector">Shooter number</label>
+                    <select name="shooter" id="shooter_selector"></select>
+                </form>
+            </div>
+        </div>
     </body>
 </html>
