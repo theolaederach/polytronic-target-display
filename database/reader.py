@@ -139,3 +139,10 @@ def getTargetType(target_number: int) -> str:
         return target_type
     else:
         return "A10"
+
+
+def getAllShooters():
+    """return all the shooter from the table shooters"""
+    request = "SELECT * FROM shooters"
+    reponse = execute_request(request, ())
+    return reponse

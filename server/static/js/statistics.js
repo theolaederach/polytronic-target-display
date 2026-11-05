@@ -10,8 +10,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   function append_shooter_name(item) {
     const new_option = document.createElement("option");
-    new_option.value = item;
-    new_option.text = item;
+    new_option.value = item[0];
+    new_option.text = item[2];
 
     shooter_selector.appendChild(new_option);
   }

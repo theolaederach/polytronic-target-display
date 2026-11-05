@@ -5,10 +5,12 @@
 
 from flask import Blueprint, jsonify
 
+import database.reader as r
+
 api_shooters = Blueprint("api_shooters", __name__, template_folder="templates")
 
 
 @api_shooters.route("/name/all")
-def get_shots():
-    reponse = {"shooters_number": ["moi", "lui", "toi"]}
+def allShooters():
+    reponse = {"shooters_number": r.getAllShooters()}
     return jsonify(reponse)
