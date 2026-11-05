@@ -47,7 +47,7 @@ def _get_connection() -> mariadb.Connection:
         raise
 
 
-def execute_request(request: str, data: tuple) -> list | None:
+def execute_request(request: str, data: tuple) -> list[list] | None:
     """
     Execute a sql request and return all rows as a list of tuples.
 

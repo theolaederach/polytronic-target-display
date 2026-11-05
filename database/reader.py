@@ -146,3 +146,24 @@ def getAllShooters():
     request = "SELECT * FROM shooters"
     reponse = execute_request(request, ())
     return reponse
+
+
+def getAllShots(shooter_id: int) -> list[int]:
+    """Return all the shots from all the programm of a shooter"""
+    request = (
+        "select shots.score_base100, p.id "
+        "from shooters s "
+        "inner join programm p on p.shooters_id = s.id "
+        "INNER JOIN series se on se.programm_id = p.id "
+        "INNER JOIN shots on shots.series_id  = se.id "
+        "where s.id = ?;"
+    )
+    reponse = execute_request(request, (shooter_id,))
+    if reponse is None:
+        return [0]
+
+    shots: list[int] = []
+    for shot in reponse:
+        shots.append(int(shot[0]))
+
+    return shots

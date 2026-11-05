@@ -1,5 +1,7 @@
 from flask import Blueprint, render_template
 
+import database.reader as r
+
 routes = Blueprint("routes", __name__, template_folder="templates")
 
 
@@ -19,8 +21,14 @@ def target_fs():
 
 
 @routes.route("/statistics")
-def statistics():
-    return render_template("statistics.html")
+@routes.route("/statistics/<int:shooter_id>")
+def statistics(shooter_id=None):
+    if shooter_id:
+        data = {"shots": r.getAllShots(int(shooter_id))}
+    else:
+        data = None
+    print("data", shooter_id, data)
+    return render_template("statistics.html", data=data)
 
 
 @routes.route("/credits")

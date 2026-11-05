@@ -11,7 +11,7 @@
             rel="shortcut icon"
             href="{{ url_for('static', filename='favicon.ico') }}"
         />
-        <title>Target Display | Home</title>
+        <title>Target Display | Statistics</title>
     </head>
     <body>
         <nav>
@@ -30,11 +30,19 @@
 
         <div class="content parent">
             <div class="container">
-                <form>
+                <form method="get">
                     <label for="shooter_selector">Shooter number</label>
                     <select name="shooter" id="shooter_selector"></select>
+                    <input type="submit" value="Show" />
                 </form>
             </div>
+            <div style="width: 80vw">
+                <canvas id="myChart"></canvas>
+            </div>
         </div>
+        <script>
+            const data = {{ data | tojson }};
+            create_line_charts(document.getElementById('myChart'), data.shots)
+        </script>
     </body>
 </html>
