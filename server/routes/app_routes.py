@@ -24,11 +24,18 @@ def target_fs():
 @routes.route("/statistics/<int:shooter_id>")
 def statistics(shooter_id=None):
     if shooter_id:
-        data = {"shots": r.getAllShots(int(shooter_id))}
+        shooter_number, name = (
+            r.getShooterWithId(shooter_id) if not None else None,
+            "",
+        )
+        data_shots = {
+            "shots": r.getAllShots(int(shooter_id)),
+            "shooter_number": shooter_number,
+            "shooter_name": name,
+        }
     else:
-        data = None
-    print("data", shooter_id, data)
-    return render_template("statistics.html", data=data)
+        data_shots = None
+    return render_template("statistics.html", data=data_shots)
 
 
 @routes.route("/credits")

@@ -94,7 +94,7 @@ def listScore(parent_id: int, type: str, max: int = 10) -> list[int]:
         return []
 
 
-def getShooterNumber(target_number: int) -> int | None:
+def getShooterNumberWithTarget(target_number: int) -> int | None:
     programm_id, _ = get_current(target_number)
 
     request = "SELECT p.shooters_number FROM programm p WHERE p.id = ?;"
@@ -104,6 +104,20 @@ def getShooterNumber(target_number: int) -> int | None:
     if reponse:
         shooter_number = reponse[0][0]
         return shooter_number
+    else:
+        return None
+
+
+def getShooterWithId(id: int) -> tuple[int, str] | None:
+
+    request = "SELECT s.shooter_number, s.name FROM shooters s WHERE s.id = ?;"
+
+    reponse = execute_request(request, (id,))
+
+    if reponse:
+        shooter_number = int(reponse[0][0])
+        name = str(reponse[0][1])
+        return shooter_number, name
     else:
         return None
 

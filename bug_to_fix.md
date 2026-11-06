@@ -7,7 +7,7 @@ make by claude.ai, with a scan of the git repo
 
 Ces points cassent déjà le fonctionnement : à traiter en premier, ils tiennent en une soirée.
 
-- [x] `database/reader.py` : dans `getShooterNumber` et `getTargetType`, remplacer `WHERE p.GUID = ?` par `WHERE p.id = ?` (la valeur est un id entier depuis le passage guid → id)
+- [x] `database/reader.py` : dans `getShooter` et `getTargetType`, remplacer `WHERE p.GUID = ?` par `WHERE p.id = ?` (la valeur est un id entier depuis le passage guid → id)
 - [x] `database/reader.py` : dans `listLastShot`, remplacer `id LIKE ?` par `id = ?` et ajouter `ORDER BY id` à la lecture des tirs
 - [x] `database/writer.py` : `start_programm` écrit `"A10"` en dur ; lire le type de cible dans le paquet `_PRCH` (si le champ existe) ou le configurer par cible, sinon B4 ne s'affiche jamais
 - [x] `database/writer.py` : corriger `if not None else …` (toujours vrai) dans `start_programm` ; si l'INSERT échoue, ne pas écraser `current_programm_id` par `None`

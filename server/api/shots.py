@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify, request
 
 from database.reader import (
     getScoreSeriesOnTarget,
-    getShooterNumber,
+    getShooterNumberWithTarget,
     getTargetType,
     listLastShot,
 )
@@ -30,7 +30,7 @@ def json_shots(target: int) -> dict:
     ]
 
     reponse = {
-        "shooter_number": getShooterNumber(target),
+        "shooter_number": getShooterNumberWithTarget(target),
         "target_type": getTargetType(target),
         "total_score": getScoreSeriesOnTarget(target),
         "shots": shots,
