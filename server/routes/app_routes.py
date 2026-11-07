@@ -1,6 +1,17 @@
+import os
+
+from dotenv import load_dotenv
 from flask import Blueprint, render_template
 
 import database.reader as r
+
+load_dotenv()
+try:
+    numberOfTarget = int(
+        (os.getenv("NumberOfTarget", "5")),
+    )
+except TypeError:
+    numberOfTarget = 5
 
 routes = Blueprint("routes", __name__, template_folder="templates")
 
@@ -12,7 +23,7 @@ def home():
 
 @routes.route("/target")
 def target():
-    return render_template("target.html", target_number=5)
+    return render_template("target.html", target_number=numberOfTarget)
 
 
 @routes.route("/target/fullscreen")
