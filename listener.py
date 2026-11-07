@@ -58,7 +58,7 @@ def handle_connection(conn, addr):
     try:
         with conn.makefile("rb") as f:
             for raw_line in f:
-                line = raw_line.decode("utf-8", errors="replace")
+                line = raw_line.decode("latin-1")
                 try:
                     analyse_data(line)
                 except IndexError as e:
