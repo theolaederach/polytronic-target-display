@@ -7,15 +7,13 @@ from database.connection import execute_request
 from database.writer import get_current
 
 
-def listLastShot(target_number: int) -> list[tuple[float, float, int]]:
+def listLastShot(target_number: int) -> list[tuple[float, float, int, int, str]]:
     """
     Reads the shots of a series of a single taget
 
     (to do later, i'm too busy now)
     """
     _, serie_id = get_current(target_number)
-
-    shots: list[tuple[float, float, int]] = []
 
     # get the info of the series
     request = "SELECT `show` FROM series WHERE id = ?"
@@ -31,18 +29,53 @@ def listLastShot(target_number: int) -> list[tuple[float, float, int]]:
     if showed == 0:
         return []
 
-    # Get the shots
-    request = "SELECT x, y,score_base100 FROM shots WHERE series_id = ? order by id"
-    reponse = execute_request(request, (serie_id,))
+    shots = getShotsBySeriesId(serie_id).get("shots")
 
-    if reponse:
-        # Full iteration to process all results
-        for row in reponse:
-            shots.append((float(row[0]), float(row[1]), int(row[2])))
-
-        return shots[::-1]
-    else:
+    if not shots:
         return []
+
+    return shots
+
+
+def getShotsBySeriesId(serie_id) -> dict:
+    # shots is [pos_x, pos_y, score_base10, score_base100, time]
+    shots: list[tuple[float, float, int, int, str]] = []
+    # Get the shots
+    request_shots = (
+        "SELECT s.x, s.y, s.score_base10, s.score_base100, s.time "
+        "FROM shots s WHERE s.series_id = ? ORDER BY s.id DESC"
+    )
+    reponse = execute_request(request_shots, (serie_id,))
+
+    if not reponse:
+        return {}
+
+    # Full iteration to process all results
+    for row in reponse:
+        shots.append(
+            (float(row[0]), float(row[1]), int(row[2]), int(row[3]), str(row[2]))
+        )
+
+    request_serie = (
+        "SELECT se.score_base10, se.score_base100 , se.`type` , se.start_time , se.end_time "
+        "FROM series se "
+        "where se.id = ?;"
+    )
+    reponse = execute_request(request_serie, (serie_id,))
+
+    if not reponse:
+        return {}
+    serie_info = reponse[0]
+
+    return {
+        "serie_id": serie_id,
+        "total_base10": serie_info[0],
+        "total_base100": serie_info[1],
+        "type": serie_info[2],
+        "start_time": serie_info[3],
+        "end_time": serie_info[4],
+        "shots": shots,
+    }
 
 
 def listScore(parent_id: int, type: str, max: int = 10) -> list[int]:
@@ -181,3 +214,11 @@ def getAllShots(shooter_id: int) -> list[int]:
         shots.append(int(shot[0]))
 
     return shots
+
+
+def getAllProgramm(shooter_id) -> list[dict]:
+    pass
+
+
+def getProgrammById(id) -> list[int]:
+    request = ""

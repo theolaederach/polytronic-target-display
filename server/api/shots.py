@@ -24,9 +24,10 @@ def json_shots(target: int) -> dict:
             "x": x,
             "y": y,
             "number": len(data_list) - i,
-            "score": score,
+            "score": score_base10,
         }
-        for i, (x, y, score) in enumerate(data_list)
+        # s.x, s.y, s.score_base10, s.score_base100, s.time
+        for i, (x, y, score_base10, score_base100, time) in enumerate(data_list)
     ]
 
     reponse = {
