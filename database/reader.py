@@ -97,7 +97,7 @@ def listScore(parent_id: int, type: str, max: int = 10) -> list[int]:
 def getShooterNumberWithTarget(target_number: int) -> int | None:
     programm_id, _ = get_current(target_number)
 
-    request = "SELECT p.shooters_number FROM programm p WHERE p.id = ?;"
+    request = "SELECT p.shooters_id FROM programm p WHERE p.id = ?;"
 
     reponse = execute_request(request, (programm_id,))
 
