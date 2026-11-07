@@ -12,22 +12,23 @@ def home():
 
 @routes.route("/target")
 def target():
-    return render_template("target.html")
+    return render_template("target.html", target_number=5)
 
 
 @routes.route("/target/fullscreen")
 def target_fs():
-    return render_template("target_fs.html")
+    return render_template("target_fs.html", target_number=5)
 
 
 @routes.route("/statistics")
 @routes.route("/statistics/<int:shooter_id>")
 def statistics(shooter_id=None):
     if shooter_id:
-        shooter_number, name = (
-            r.getShooterWithId(shooter_id) if not None else None,
-            "",
-        )
+        shooter_info = r.getShooterWithId(shooter_id)
+        if shooter_info is not None:
+            shooter_number, name = shooter_info
+        else:
+            shooter_number, name = (None, "")
         data_shots = {
             "shots": r.getAllShots(int(shooter_id)),
             "shooter_number": shooter_number,

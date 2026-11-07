@@ -136,20 +136,12 @@ async function refreshAllTargets() {
     const data = await response.json();
     const targetsData = data.targets;
 
-    const targetSelectors = [
-      { id: "1", selector: ".target1" },
-      { id: "2", selector: ".target2" },
-      { id: "3", selector: ".target3" },
-      { id: "4", selector: ".target4" },
-      { id: "5", selector: ".target5" },
-      { id: "other", selector: ".other" },
-    ];
+    // Les cibles affichées sont générées par Flask (target_number) :
+    // on associe simplement la n-ième cible de l'API au n-ième élément de la page.
+    const containers = document.querySelectorAll(".target-container .element");
 
     targetsData.forEach((targetInfo, idx) => {
-      const selectorObj = targetSelectors[idx];
-      if (!selectorObj) return;
-
-      const container = document.querySelector(selectorObj.selector);
+      const container = containers[idx];
       if (container) {
         const svgElement = container.querySelector("svg");
         if (svgElement) {
@@ -165,9 +157,7 @@ async function refreshAllTargets() {
             }
           }
         } else {
-          console.warn(
-            `SVG non trouvé dans le conteneur ${selectorObj.selector}`,
-          );
+          console.warn(`SVG non trouvé dans la cible ${idx + 1}`);
         }
       }
     });

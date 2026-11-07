@@ -1,48 +1,24 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link
-            rel="stylesheet"
-            href="{{ url_for('static', filename='style.css') }}"
-        />
-        <link
-            rel="shortcut icon"
-            href="{{ url_for('static', filename='favicon.ico') }}"
-        />
-        <title>Target Display | Statistics</title>
-    </head>
-    <body>
-        <nav>
-            <ul>
-                <li>
-                    <a href="/"><strong>Home</strong></a>
-                </li>
-                <li><a href="/target">Target</a></li>
-                <li><a href="">Statistics</a></li>
-                <li><a href="/credits">Credits</a></li>
-            </ul>
-        </nav>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="{{ url_for('static', filename='js/statistics.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/graphs.js') }}"></script>
+{% extends "base.html" %} {% block content %}
 
-        <div class="content parent">
-            <div class="container">
-                <form method="get">
-                    <label for="shooter_selector">Shooter number</label>
-                    <select name="shooter" id="shooter_selector"></select>
-                    <input type="submit" value="Show" />
-                </form>
-            </div>
-            <div style="width: 80vw">
-                <canvas id="myChart"></canvas>
-            </div>
-        </div>
-        <script>
-            const data = {{ data | tojson }};
-            create_line_charts(document.getElementById('myChart'), data.shots)
-        </script>
-    </body>
-</html>
+<div class="container">
+    <form method="get">
+        <label for="shooter_selector">Shooter number</label>
+        <select name="shooter" id="shooter_selector"></select>
+        <input type="submit" value="Show" />
+    </form>
+</div>
+{% if data %}
+<div class="container" style="width: 80vw">
+    <h1>{{ data.shooter_name }}</h1>
+    <canvas id="myChart"></canvas>
+</div>
+{% endif %} {% endblock %} {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/statistics.js') }}"></script>
+<script src="{{ url_for('static', filename='js/graphs.js') }}"></script>
+<script>
+    const data = {{ data | tojson }};
+    console.log(data.shooter_number)
+    create_line_charts(document.getElementById('myChart'), data.shots)
+</script>
+{% endblock %}
