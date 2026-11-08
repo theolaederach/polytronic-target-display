@@ -51,6 +51,19 @@ def statistics(shooter_id=None):
     return render_template("statistics.html", data=data_shots)
 
 
+@routes.route("/statistics/programm/<int:programm_id>")
+def getProgramm(programm_id=None):
+    if programm_id:
+        series = []
+        for id in r.getAllSeriesIdByProgrammId(programm_id):
+            series.append(r.getShotsBySeriesId(id))
+
+        data = {"programm": r.getProgrammById(programm_id), "series": series}
+    else:
+        data = None
+    return render_template("programm.html", data=data)
+
+
 @routes.route("/credits")
 def credits():
     return render_template("credits.html")

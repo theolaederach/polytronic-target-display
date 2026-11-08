@@ -8,9 +8,17 @@
     </form>
 </div>
 {% if data %}
-<div class="container" style="width: 80vw">
+<div class="container" style="width: 100%">
     <h1>{{ data.shooter_name }}</h1>
     <canvas id="shots_stats"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/graphs.js') }}"></script>
+    <script>
+        const shots = {{ data.shots | tojson }};
+        const shooter_number = {{ data.shooter_number }}
+        console.log(shooter_number)
+        create_line_charts(document.getElementById('shots_stats'), shots)
+    </script>
 </div>
 {% endif %}
 <table>
@@ -35,13 +43,5 @@
     {% endfor %}
 </table>
 {% endblock %} {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/statistics.js') }}"></script>
-<script src="{{ url_for('static', filename='js/graphs.js') }}"></script>
-<script>
-    const shots = {{ data.shots | tojson }};
-    const shooter_number = {{ data.shooter_number }}
-    console.log(shooter_number)
-    create_line_charts(document.getElementById('shots_stats'), shots)
-</script>
 {% endblock %}

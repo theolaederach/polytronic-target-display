@@ -1,0 +1,64 @@
+{% extends "base.html" %} {% block content %}
+
+<h1>Programm information</h1>
+
+{% if data %}
+<div class="container">
+    <h2>Programm infos</h2>
+
+    <ul>
+        <li><strong>Start time:</strong> {{ data.programm.start_time }}</li>
+        <li><strong>End time:</strong> {{ data.programm.end_time }}</li>
+        <li>
+            <strong>Score (10‑base):</strong> {{ data.programm.score_base10 }}
+        </li>
+        <li>
+            <strong>Score (100‑base):</strong> {{ data.programm.score_base100 }}
+        </li>
+        <li>
+            <strong>Target number:</strong> {{ data.programm.target_number }}
+        </li>
+        <li>
+            <strong>Shooter:</strong> {{ data.programm.shooter.number }} – {{
+            data.programm.shooter.name }}
+        </li>
+    </ul>
+</div>
+{% for serie in data.series %}
+<div class="serie-card container">
+    <h3>Serie {{ serie.serie_id }} (type {{ serie.type }})</h3>
+    <ul>
+        <li><strong>Total (10‑base):</strong> {{ serie.total_base10 }}</li>
+        <li><strong>Total (100‑base):</strong> {{ serie.total_base100 }}</li>
+        <li><strong>Start:</strong> {{ serie.start_time }}</li>
+        <li><strong>End:</strong> {{ serie.end_time }}</li>
+    </ul>
+
+    <table class="table table-sm mt-2">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Pos X</th>
+                <th>Pos Y</th>
+                <th>Score 10</th>
+                <th>Score 100</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for shot in serie.shots %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ shot[0] }}</td>
+                <td>{{ shot[1] }}</td>
+                <td>{{ shot[2] }}</td>
+                <td>{{ shot[3] }}</td>
+                <td>{{ shot[4] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endfor %} {% else %}
+<p>No data available.</p>
+{% endif %} {% endblock %}

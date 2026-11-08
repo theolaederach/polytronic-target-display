@@ -76,7 +76,13 @@ def getShotsBySeriesId(serie_id) -> dict:
     # Full iteration to process all results
     for row in reponse:
         shots.append(
-            (float(row[0]), float(row[1]), int(row[2]), int(row[3]), str(row[2]))
+            (
+                float(row[0]),
+                float(row[1]),
+                int(row[2]),
+                int(row[3]),
+                format_time(row[4]),
+            )
         )
 
     request_serie = (
@@ -95,8 +101,8 @@ def getShotsBySeriesId(serie_id) -> dict:
         "total_base10": serie_info[0],
         "total_base100": serie_info[1],
         "type": serie_info[2],
-        "start_time": serie_info[3],
-        "end_time": serie_info[4],
+        "start_time": format_time(serie_info[3]),
+        "end_time": format_time(serie_info[4]),
         "shots": shots,
     }
 
