@@ -1,7 +1,11 @@
 # Title : Database
+# Title: Database
 # Author : Théo (Refactored by Euria)
+# Author: Theo (Refactored by Euria)
 # Last update : 17.09.2026
+# Last update: 17.09.2026
 # Description : Module for open the connection to the database.
+# Description: Module for opening the connection to the database.
 
 import logging
 import os
@@ -22,9 +26,11 @@ db_config = {
     "password": os.getenv("DATABASE_PASSWORD"),
     "database": DATABASE,
     "autocommit": False,  # commit are gered manualy
+    # commit are managed manually
 }
 
 # Création d’un pool
+# Creation of a connection pool
 pool = mariadb.ConnectionPool(
     pool_name="mariadb_pool",
     pool_size=5,
