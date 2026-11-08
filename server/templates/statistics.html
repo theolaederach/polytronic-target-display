@@ -10,15 +10,38 @@
 {% if data %}
 <div class="container" style="width: 80vw">
     <h1>{{ data.shooter_name }}</h1>
-    <canvas id="myChart"></canvas>
+    <canvas id="shots_stats"></canvas>
 </div>
-{% endif %} {% endblock %} {% block scripts %}
+{% endif %}
+<table>
+    <tr>
+        <th>start time</th>
+        <th>end time</th>
+        <th>target type</th>
+        <th>total base10</th>
+        <th>total base100</th>
+        <th></th>
+    </tr>
+
+    {% for i in data.programm %}
+    <tr>
+        <td>{{ i.start_time }}</td>
+        <td>{{ i.end_time }}</td>
+        <td>{{ i.target_type }}</td>
+        <td>{{ i.score_base10 }}</td>
+        <td>{{ i.score_base100 }}</td>
+        <td><a href="/statistics/programm/{{ i.id }}">➡️</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %} {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/statistics.js') }}"></script>
 <script src="{{ url_for('static', filename='js/graphs.js') }}"></script>
 <script>
-    const data = {{ data | tojson }};
-    console.log(data.shooter_number)
-    create_line_charts(document.getElementById('myChart'), data.shots)
+    const shots = {{ data.shots | tojson }};
+    const shooter_number = {{ data.shooter_number }}
+    console.log(shooter_number)
+    create_line_charts(document.getElementById('shots_stats'), shots)
 </script>
 {% endblock %}

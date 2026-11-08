@@ -29,12 +29,7 @@ body {
     min-height: 100%;
     background-color: var(--bg);
     color: var(--text);
-    font-family:
-        system-ui,
-        -apple-system,
-        "Segoe UI",
-        Roboto,
-        sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 h1,
@@ -149,6 +144,71 @@ input[type="submit"]:hover {
     border-color: var(--accent-strong);
 }
 
+/* ---------- Tableaux ---------- */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden; /* arrondit aussi les coins du contenu */
+    font-size: 0.95rem;
+}
+
+caption {
+    caption-side: top;
+    text-align: left;
+    padding: 0 0 0.75rem;
+    color: var(--text-muted);
+}
+
+th,
+td {
+    padding: 0.7rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+thead th {
+    background-color: var(--sidebar);
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+tbody tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+tbody tr:hover {
+    background-color: var(--surface-hover);
+}
+
+tbody tr:last-child td,
+tbody tr:last-child th {
+    border-bottom: none;
+}
+
+/* Colonnes numériques : ajoute class="num" sur les th/td concernés */
+th.num,
+td.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Pour un tableau large : <div class="table-wrapper"><table>…</table></div> */
+.table-wrapper {
+    overflow-x: auto;
+}
+
 /* ---------- Page Target : la grille remplit exactement la fenêtre ---------- */
 .content:has(.target-container) {
     height: 100vh;
@@ -162,10 +222,6 @@ input[type="submit"]:hover {
 }
 
 .target-container {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
     flex: 1;
     min-height: 0;
     display: grid;

@@ -41,9 +41,10 @@ def statistics(shooter_id=None):
         else:
             shooter_number, name = (None, "")
         data_shots = {
-            "shots": r.getAllShots(int(shooter_id)),
             "shooter_number": shooter_number,
             "shooter_name": name,
+            "shots": r.getAllShots(int(shooter_id)),
+            "programm": r.getAllProgramm(int(shooter_id)),
         }
     else:
         data_shots = None

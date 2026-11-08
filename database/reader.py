@@ -3,8 +3,20 @@
 # Last update : 27.10.2026
 # Description : Module for read the database with function like listScore()
 
+from datetime import datetime, time
+
 from database.connection import execute_request
 from database.writer import get_current
+
+
+def format_time(value) -> str:
+    """Renvoie l'heure au format HH:MM:SS, sans les microsecondes."""
+    if value is None:
+        return ""
+    if isinstance(value, (time, datetime)):
+        return value.strftime("%H:%M:%S")
+    # texte du type "10:01:52.990000" ou "2026-11-08 10:01:52.990000"
+    return str(value).split(".")[0].split(" ")[-1]
 
 
 def listLastShot(target_number: int) -> list[tuple[float, float, int, int, str]]:
@@ -217,8 +229,48 @@ def getAllShots(shooter_id: int) -> list[int]:
 
 
 def getAllProgramm(shooter_id) -> list[dict]:
-    pass
+    """
+    Get all the programm from a shooter
+    returning all the programm into a dict (json)
+
+    Args :
+        shooter_id (int): the id of the shooter
+
+    Return :
+        [{
+            "id": int,
+            "score_base10": int,
+            "score_base100": int,
+            "target_type": str,
+            "start_time": str,
+            "end_time": str,
+        },
+        {...}]
+    """
+    request = (
+        "SELECT p.id, p.score_base10, p.score_base100, p.target_type, p.start_time, p.end_time "
+        "FROM programm p "
+        "WHERE p.shooters_id = ?;"
+    )
+    reponse = execute_request(request, (shooter_id,))
+
+    if not reponse:
+        return [{}]
+
+    list_programm: list[dict] = []
+    for row in reponse:
+        list_programm.append(
+            {
+                "id": int(row[0]),
+                "score_base10": int(row[1]),
+                "score_base100": int(row[2]),
+                "target_type": row[3],
+                "start_time": format_time(row[4]),
+                "end_time": format_time(row[5]),
+            }
+        )
+    return list_programm
 
 
 def getProgrammById(id) -> list[int]:
-    request = ""
+    return [0]
