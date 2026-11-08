@@ -10,7 +10,6 @@ from database.writer import get_current
 
 
 def format_time(value) -> str:
-    """Renvoie l'heure au format HH:MM:SS, sans les microsecondes."""
     if value is None:
         return ""
     if isinstance(value, (time, datetime)):
@@ -20,11 +19,6 @@ def format_time(value) -> str:
 
 
 def listLastShot(target_number: int) -> list[tuple[float, float, int, int, str]]:
-    """
-    Reads the shots of a series of a single taget
-
-    (to do later, i'm too busy now)
-    """
     _, serie_id = get_current(target_number)
 
     # get the info of the series
@@ -168,10 +162,6 @@ def getShooterWithId(id: int) -> tuple[int, str] | None:
 
 
 def getScoreSeriesOnTarget(target_number: int) -> int | None:
-    """
-    Function description :
-    To do later too, i'm still too busy
-    """
     _, serie_id = get_current(target_number)
 
     if not serie_id:
@@ -181,10 +171,6 @@ def getScoreSeriesOnTarget(target_number: int) -> int | None:
 
 
 def getTargetType(target_number: int) -> str:
-    """
-    Function description :
-    To do later too, i'm still too busy
-    """
     programm_id, _ = get_current(target_number)
 
     if not programm_id:
@@ -272,5 +258,62 @@ def getAllProgramm(shooter_id) -> list[dict]:
     return list_programm
 
 
-def getProgrammById(id) -> list[int]:
-    return [0]
+def getProgrammById(id) -> dict:
+    """
+    Args:
+        id (int): id of the programm
+    Return :
+        {
+            start_time
+            end_time
+            score_base10
+            score_base100
+            target_number
+            shooter:{
+                id
+                number
+                name
+            }
+        }
+    """
+    request_programm = (
+        "SELECT p.start_time, p.end_time, p.score_base10, p.score_base100, p.target_number, p.shooters_id "
+        "FROM programm p "
+        "WHERE p.id = ?;"
+    )
+    reponse = execute_request(request_programm, (id,))
+
+    if not reponse:
+        return {}
+
+    (start_time, end_time, score_base10, score_base100, target_number, shooter_id) = (
+        reponse[0]
+    )
+    shooter_info = getShooterWithId(shooter_id)
+
+    if not shooter_info:
+        return {}
+    shooter_number, shooter_name = shooter_info
+
+    return {
+        "start_time": format_time(start_time),
+        "end_time": format_time(end_time),
+        "score_base10": score_base10,
+        "score_base100": score_base100,
+        "target_number": target_number,
+        "shooter": {"id": shooter_id, "number": shooter_number, "name": shooter_name},
+    }
+
+
+def getAllSeriesIdByProgrammId(programm_id) -> list[int]:
+    request = "select se.id from programm p inner join series se on se.programm_id = p.id where p.id = ?;"
+    reponse = execute_request(request, (programm_id,))
+
+    if not reponse:
+        return []
+
+    series_ids: list[int] = []
+    for id in reponse:
+        series_ids.append(int(id[0]))
+
+    return series_ids
