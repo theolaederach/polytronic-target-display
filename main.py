@@ -95,6 +95,5 @@ if __name__ == "__main__":
         from server import app
 
         app.startWebServer(
-            host=args.web_server_host,
-            port=args.web_server_port,
+            host=args.web_server_host, port=args.web_server_port, debug=True
         )

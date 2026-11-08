@@ -1,0 +1,90 @@
+{% extends "base.html" %} {% block content %}
+
+<h1>Programm information</h1>
+
+{% if data %}
+<div class="container">
+    <h2>Programm infos</h2>
+
+    <ul>
+        <li><strong>Start time:</strong> {{ data.programm.start_time }}</li>
+        <li><strong>End time:</strong> {{ data.programm.end_time }}</li>
+        <li>
+            <strong>Score (10‑base):</strong> {{ data.programm.score_base10 }}
+        </li>
+        <li>
+            <strong>Score (100‑base):</strong> {{ data.programm.score_base100 }}
+        </li>
+        <li>
+            <strong>Target number:</strong> {{ data.programm.target_number }}
+        </li>
+        <li>
+            <strong>Shooter:</strong> {{ data.programm.shooter.number }} – {{
+            data.programm.shooter.name }}
+        </li>
+    </ul>
+</div>
+{% for serie in data.series %}
+<div class="serie-card container">
+    <h3>Serie {{ serie.serie_id }} (type {{ serie.type }})</h3>
+    <div>
+        <ul>
+            <li><strong>Total (10‑base):</strong> {{ serie.total_base10 }}</li>
+            <li>
+                <strong>Total (100‑base):</strong> {{ serie.total_base100 }}
+            </li>
+            <li><strong>Start:</strong> {{ serie.start_time }}</li>
+            <li><strong>End:</strong> {{ serie.end_time }}</li>
+        </ul>
+
+        <table class="table table-sm mt-2">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Score 10</th>
+                    <th>Score 100</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for shot in serie.shots %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ shot[2] }} pts</td>
+                    <td>{{ shot[3] }} pts</td>
+                    <td>{{ shot[4] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <svg
+            id="svg-target{{ loop.index }}"
+            viewBox="0 0 1024 1024"
+            data-shots="{{ serie.shots | tojson | forceescape }}"
+        >
+            <image
+                href="{{ url_for('static', filename='assets/target_A10.png') }}"
+                width="1024"
+                height="1024"
+            />
+        </svg>
+    </div>
+</div>
+{% endfor %}
+
+<div
+    class="container page-link"
+    role="button"
+    tabindex="0"
+    onclick="location.href='/statistics/{{ data.programm.shooter.id }}'"
+>
+    <strong>🔙 Back</strong>
+</div>
+
+{% else %}
+<p>No data available.</p>
+{% endif %} {% endblock %} {% block scripts %}
+<script src="{{ url_for('static', filename='js/update-target.js') }}"></script>
+{% endblock %}

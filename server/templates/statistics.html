@@ -1,28 +1,56 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link
-            rel="stylesheet"
-            href="{{ url_for('static', filename='style.css') }}"
-        />
-        <link
-            rel="shortcut icon"
-            href="{{ url_for('static', filename='favicon.ico') }}"
-        />
-        <title>Target Display | Home</title>
-    </head>
-    <body>
-        <nav>
-            <ul>
-                <li>
-                    <a href="/"><strong>Home</strong></a>
-                </li>
-                <li><a href="/target">Target</a></li>
-                <li><a href="">Statistics</a></li>
-                <li><a href="/credits">Credits</a></li>
-            </ul>
-        </nav>
-    </body>
-</html>
+{% extends "base.html" %} {% block content %}
+
+<div class="container">
+    <form method="get">
+        <label for="shooter_selector">Shooter number</label>
+        <select name="shooter" id="shooter_selector"></select>
+        <input type="submit" value="Show" />
+    </form>
+</div>
+{% if data %}
+<div class="container" style="width: 100%">
+    <h1>{{ data.shooter_name }}</h1>
+    <canvas id="shots_stats"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/graphs.js') }}"></script>
+    <script>
+        const shots = {{ data.shots | tojson }};
+        const shooter_number = {{ data.shooter_number }};
+        console.log(shooter_number);
+        create_line_charts(document.getElementById('shots_stats'), shots);
+    </script>
+</div>
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Start time</th>
+            <th>End time</th>
+            <th>Target type</th>
+            <th>Total 10</th>
+            <th>Total 100</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for i in data.programm %}
+        <tr
+            class="page-link"
+            role="button"
+            tabindex="0"
+            onclick="location.href='/statistics/programm/{{ i.id }}'"
+        >
+            <td>{{ loop.index }}</td>
+            <td>{{ i.start_time }}</td>
+            <td>{{ i.end_time }}</td>
+            <td>{{ i.target_type }}</td>
+            <td>{{ i.score_base10 }} pts</td>
+            <td>{{ i.score_base100 }} pts</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endif %} {% endblock %} {% block scripts %}
+<script src="{{ url_for('static', filename='js/statistics.js') }}"></script>
+{% endblock %}

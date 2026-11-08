@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='style.css') }}"
+        />
+        <link
+            rel="shortcut icon"
+            href="{{ url_for('static', filename='favicon.ico') }}"
+        />
+        <title>{% block title %}Target Display{% endblock %}</title>
+    </head>
+    <body>
+        {% set pages = [('/', 'Home'), ('/target', 'Target'), ('/statistics',
+        'Statistics'), ('/credits', 'Credits')] %}
+        <nav>
+            <ul>
+                {% for url, label in pages %}
+                <li>
+                    <a href="{{ url }}" {% if request.path == url %}aria-current="page"{% endif %}>{{ label }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </nav>
+
+        <div class="content parent">{% block content %}{% endblock %}</div>
+
+        {% block scripts %}{% endblock %}
+    </body>
+</html>
