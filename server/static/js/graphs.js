@@ -12,10 +12,10 @@ function create_line_charts(chart_canva, data) {
         labels: labels,
         datasets: [
           {
-            label: "shots",
+            label: "shot's score",
             data: data,
             fill: false,
-            borderColor: "rgb(75, 192, 192)",
+            borderColor: "#11A1E1",
             tension: 0.1,
           },
         ],
