@@ -166,20 +166,4 @@ async function refreshAllTargets() {
   }
 }
 
-// Démarrage
-document.addEventListener("DOMContentLoaded", () => {
-  // Premier chargement immédiat
-  refreshAllTargets();
 
-  // Puis rafraîchissement toutes les secondes
-  // Use recursive setTimeout to avoid overlapping requests
-  async function loop() {
-    await refreshAllTargets();
-    setTimeout(loop, REFRESH_INTERVAL);
-  }
-  loop();
-
-  console.log(
-    `Système de mise à jour des cibles démarré (${REFRESH_INTERVAL}s interval)`,
-  );
-});
