@@ -44,6 +44,23 @@ def listLastShot(target_number: int) -> list[tuple[float, float, int, int, str]]
 
 
 def getShotsBySeriesId(serie_id) -> dict:
+    """
+    Retrieve all shots belonging to a series and aggregate series info.
+
+    Parameters
+    ----------
+    serie_id : int
+        Identifier of the series whose shots are requested.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the series metadata (id, total scores, type,
+        start and end times) and a list of tuples describing each shot:
+        ``[(x, y, score_base10, score_base100, time_str), ...]``.  If the
+        series does not exist or has no shots, an empty dictionary is
+        returned.
+    """
     # shots is [pos_x, pos_y, score_base10, score_base100, time]
     shots: list[tuple[float, float, int, int, str]] = []
     # Get the shots
@@ -86,14 +103,23 @@ def getShotsBySeriesId(serie_id) -> dict:
 
 def listScore(parent_id: int, type: str, max: int = 10) -> list[int]:
     """
-    this function return all the shots's scrores of a series, usind the id of the parent.
+    Return the list of scores for the shots or series belonging to a given parent.
 
-    Args:
-        parent_id (int): the id of the series/programm (parent)
-        type (str): shots/series
-        max (int): max of the scores. 10/100 is the only value aviable
+    Parameters
+    ----------
+    parent_id : int
+        Identifier of the parent (series or programme) whose scores are requested.
+    type : str
+        ``"shots"`` to fetch individual shot scores, ``"series"`` to fetch series
+        scores.
+    max : int, optional
+        The scoring base to use; ``10`` or ``100`` are supported.
 
-    Return (list[int]): the list of the shots or series's score.
+    Returns
+    -------
+    list[int]
+        A list of integer scores, ordered from oldest to newest.  If no
+        records exist, an empty list is returned.
     """
 
     scores: list[int] = []
@@ -134,6 +160,20 @@ def listScore(parent_id: int, type: str, max: int = 10) -> list[int]:
 
 
 def getShooterNumberWithTarget(target_number: int) -> int | None:
+    """
+    Retrieve the shooter number associated with a target.
+
+    Parameters
+    ----------
+    target_number : int
+        Index of the target.
+
+    Returns
+    -------
+    int | None
+        The shooter's number, or ``None`` if the target has no associated
+        programme.
+    """
     programm_id, _ = get_current(target_number)
 
     request = "SELECT p.shooters_id FROM programm p WHERE p.id = ?;"
@@ -148,6 +188,19 @@ def getShooterNumberWithTarget(target_number: int) -> int | None:
 
 
 def getShooterWithId(id: int) -> tuple[int, str] | None:
+    """
+    Fetch the shooter record by its primary key.
+
+    Parameters
+    ----------
+    id : int
+        Shooter primary key.
+
+    Returns
+    -------
+    tuple[int, str] | None
+        ``(shooter_number, name)`` if found, otherwise ``None``.
+    """
 
     request = "SELECT s.shooter_number, s.name FROM shooters s WHERE s.id = ?;"
 
@@ -162,6 +215,13 @@ def getShooterWithId(id: int) -> tuple[int, str] | None:
 
 
 def getScoreSeriesOnTarget(target_number: int) -> int | None:
+    """
+    Return the total score of all shots in the current series for a target.
+
+    The function fetches the current series using :func:`get_current` and
+    then sums the ``score_base10`` values returned by :func:`listScore`.
+    If the series does not exist, ``None`` is returned.
+    """
     _, serie_id = get_current(target_number)
 
     if not serie_id:
@@ -171,6 +231,12 @@ def getScoreSeriesOnTarget(target_number: int) -> int | None:
 
 
 def getTargetType(target_number: int) -> str:
+    """
+    Return the target type string for a target.
+
+    The target type is stored in the ``programm`` table.  If the target
+    has no associated programme, ``"A10"`` is returned as a default.
+    """
     programm_id, _ = get_current(target_number)
 
     if not programm_id:
@@ -306,6 +372,20 @@ def getProgrammById(id) -> dict:
 
 
 def getAllSeriesIdByProgrammId(programm_id) -> list[int]:
+    """
+    Retrieve all series identifiers belonging to a programme.
+
+    Parameters
+    ----------
+    programm_id : int
+        Identifier of the programme.
+
+    Returns
+    -------
+    list[int]
+        List of series IDs.  Returns an empty list if the programme
+        has no series.
+    """
     request = "select se.id from programm p inner join series se on se.programm_id = p.id where p.id = ?;"
     reponse = execute_request(request, (programm_id,))
 
