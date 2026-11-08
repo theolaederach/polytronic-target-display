@@ -1,19 +1,32 @@
 /* =========================================================
    Thème : "Night Range" – bleu nuit + accents ciel / ambre
+   Principes : réponse immédiate, matériaux translucides,
+   typographie adaptée à la taille, mouvement réduit respecté
    ========================================================= */
 :root {
+    color-scheme: dark; /* menus <select>, scrollbars et champs natifs en sombre */
+
     --bg: #0f172a;
     --sidebar: #0b1220;
+    --sidebar-glass: rgba(11, 18, 32, 0.72);
     --surface: #1e293b;
     --surface-hover: #273449;
     --border: #334155;
+    --border-soft: rgba(255, 255, 255, 0.07);
     --text: #e2e8f0;
     --text-muted: #94a3b8;
     --accent: #38bdf8;
     --accent-strong: #0ea5e9;
     --accent-contrast: #082f49;
-    --radius: 10px;
+
+    --radius: 12px;
     --sidebar-width: 260px;
+
+    /* Ombres : plus grande surface = plus profonde */
+    --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.05) inset,
+        0 8px 24px rgba(0, 0, 0, 0.25);
+
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 *,
@@ -29,16 +42,46 @@ body {
     min-height: 100%;
     background-color: var(--bg);
     color: var(--text);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font: 100%/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
 
+::selection {
+    background: rgba(56, 189, 248, 0.35);
+}
+
+/* ---------- Typographie : tracking et interlignage selon la taille ---------- */
 h1,
 h2 {
     color: var(--text);
-    font-weight: 600;
+    font-weight: 650;
 }
 
-/* ---------- Sidebar ---------- */
+h1 {
+    font-size: clamp(1.75rem, 2.5vw + 1rem, 2.5rem);
+    line-height: 1.1; /* gros texte : interlignage serré */
+    letter-spacing: -0.02em; /* gros texte : tracking négatif */
+    margin: 0 0 1.25rem;
+}
+
+h2 {
+    font-size: 1.25rem;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+}
+
+/* ---------- Focus clavier visible partout ---------- */
+a:focus-visible,
+select:focus-visible,
+input:focus-visible,
+button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* ---------- Sidebar : matériau structurel, plus lourd que le contenu ---------- */
 nav {
     position: fixed;
     top: 0;
@@ -46,9 +89,12 @@ nav {
     width: var(--sidebar-width);
     height: 100vh;
     overflow-y: auto;
-    background-color: var(--sidebar);
-    border-right: 1px solid var(--border);
+    background-color: var(--sidebar-glass);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    border-right: 1px solid var(--border-soft);
     padding: 1.5rem 1rem;
+    z-index: 10;
 }
 
 nav ul {
@@ -62,23 +108,37 @@ nav ul {
 
 nav a {
     display: block;
-    padding: 0.6rem 0.9rem;
+    padding: 0.65rem 0.9rem;
     color: var(--text-muted);
     text-decoration: none;
-    border-radius: 6px;
-    border-left: 3px solid transparent;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+    border-radius: 8px;
     transition:
-        background-color 0.15s ease,
-        color 0.15s ease;
+        background-color 150ms ease,
+        color 150ms ease,
+        transform 100ms ease-out;
 }
 
 nav a:hover {
-    background-color: var(--surface);
+    background-color: rgba(255, 255, 255, 0.06);
     color: var(--text);
 }
 
-nav a strong {
+/* Retour immédiat à la pression, pas au relâchement */
+nav a:active {
+    transform: scale(0.98);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Où suis-je ? : page courante (aria-current="page" dans base.html) */
+nav a[aria-current="page"] {
+    background-color: rgba(56, 189, 248, 0.14);
     color: var(--accent);
+}
+
+nav a strong {
+    font-weight: inherit;
 }
 
 /* ---------- Contenu principal ---------- */
@@ -93,7 +153,9 @@ nav a strong {
 .container {
     background-color: var(--surface);
     border: 1px solid var(--border);
+    border-top-color: var(--border-soft); /* arête haute : la lumière accroche le matériau */
     border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
     padding: 1.25rem 1.5rem;
     margin: 0 0 1.5rem;
     max-width: 100%; /* évite que le width: 80vw inline ne déborde */
@@ -107,26 +169,26 @@ nav a strong {
 label {
     color: var(--text-muted);
     margin-right: 0.5rem;
+    font-size: 0.95rem;
 }
 
 select,
 input[type="submit"] {
     font: inherit;
-    padding: 0.5rem 0.9rem;
-    border-radius: 6px;
+    padding: 0.55rem 0.95rem;
+    border-radius: 8px;
     border: 1px solid var(--border);
 }
 
 select {
     background-color: var(--bg);
     color: var(--text);
-    min-width: 120px;
+    min-width: 8rem;
+    transition: border-color 150ms ease;
 }
 
-select:focus,
-input[type="submit"]:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
+select:hover {
+    border-color: var(--text-muted);
 }
 
 input[type="submit"] {
@@ -136,12 +198,19 @@ input[type="submit"] {
     color: var(--accent-contrast);
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.15s ease;
+    transition:
+        background-color 150ms ease,
+        transform 100ms ease-out;
 }
 
 input[type="submit"]:hover {
     background-color: var(--accent-strong);
     border-color: var(--accent-strong);
+}
+
+/* Feedback instantané dès la pression */
+input[type="submit"]:active {
+    transform: scale(0.97);
 }
 
 /* ---------- Tableaux ---------- */
@@ -152,8 +221,10 @@ table {
     background-color: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    overflow: hidden; /* arrondit aussi les coins du contenu */
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
     font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
 }
 
 caption {
@@ -175,17 +246,17 @@ thead th {
     color: var(--accent);
     font-weight: 600;
     text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.04em;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em; /* petit texte : tracking positif */
     white-space: nowrap;
+}
+
+tbody tr {
+    transition: background-color 150ms ease;
 }
 
 tbody tr:nth-child(even) {
     background-color: rgba(255, 255, 255, 0.02);
-}
-
-tbody tr {
-    transition: background-color 0.15s ease;
 }
 
 tbody tr:hover {
@@ -197,14 +268,11 @@ tbody tr:last-child th {
     border-bottom: none;
 }
 
-/* Colonnes numériques : ajoute class="num" sur les th/td concernés */
 th.num,
 td.num {
     text-align: right;
-    font-variant-numeric: tabular-nums;
 }
 
-/* Pour un tableau large : <div class="table-wrapper"><table>…</table></div> */
 .table-wrapper {
     overflow-x: auto;
 }
@@ -252,4 +320,44 @@ td.num {
     min-height: 0;
     width: 100%;
     height: 100%;
+}
+
+/* =========================================================
+   Accessibilité
+   ========================================================= */
+
+/* Mouvement réduit : plus de mise à l'échelle, on garde les changements de couleur */
+@media (prefers-reduced-motion: reduce) {
+    nav a:active,
+    input[type="submit"]:active {
+        transform: none;
+    }
+
+    * {
+        transition-duration: 1ms !important;
+    }
+}
+
+/* Transparence réduite : surfaces pleines, sans flou */
+@media (prefers-reduced-transparency: reduce) {
+    nav {
+        background-color: var(--sidebar);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
+
+/* Contraste renforcé : bordures nettes, fonds quasi opaques */
+@media (prefers-contrast: more) {
+    :root {
+        --border: #94a3b8;
+        --border-soft: #94a3b8;
+        --text-muted: #cbd5e1;
+    }
+
+    nav {
+        background-color: var(--sidebar);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
 }

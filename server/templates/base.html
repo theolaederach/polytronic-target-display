@@ -11,17 +11,18 @@
             rel="shortcut icon"
             href="{{ url_for('static', filename='favicon.ico') }}"
         />
-        <title>Target Display | Home</title>
+        <title>{% block title %}Target Display{% endblock %}</title>
     </head>
     <body>
+        {% set pages = [('/', 'Home'), ('/target', 'Target'), ('/statistics',
+        'Statistics'), ('/credits', 'Credits')] %}
         <nav>
             <ul>
+                {% for url, label in pages %}
                 <li>
-                    <a href="/"><strong>Home</strong></a>
+                    <a href="{{ url }}" {% if request.path == url %}aria-current="page"{% endif %}>{{ label }}</a>
                 </li>
-                <li><a href="/target">Target</a></li>
-                <li><a href="/statistics">Statistics</a></li>
-                <li><a href="/credits">Credits</a></li>
+                {% endfor %}
             </ul>
         </nav>
 
