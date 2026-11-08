@@ -4,7 +4,7 @@
 // Description : Fetch shots for each target every second and draw crosshairs.
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-const API_BASE_URL = "/api/targets/all";
+const API_BASE_URL = "/api/shots/targets/all";
 const REFRESH_INTERVAL = 2000; // 1 seconde
 
 // Configuration graphique
@@ -136,20 +136,12 @@ async function refreshAllTargets() {
     const data = await response.json();
     const targetsData = data.targets;
 
-    const targetSelectors = [
-      { id: "1", selector: ".target1" },
-      { id: "2", selector: ".target2" },
-      { id: "3", selector: ".target3" },
-      { id: "4", selector: ".target4" },
-      { id: "5", selector: ".target5" },
-      { id: "other", selector: ".other" },
-    ];
+    // Les cibles affichées sont générées par Flask (target_number) :
+    // on associe simplement la n-ième cible de l'API au n-ième élément de la page.
+    const containers = document.querySelectorAll(".target-container .element");
 
     targetsData.forEach((targetInfo, idx) => {
-      const selectorObj = targetSelectors[idx];
-      if (!selectorObj) return;
-
-      const container = document.querySelector(selectorObj.selector);
+      const container = containers[idx];
       if (container) {
         const svgElement = container.querySelector("svg");
         if (svgElement) {
@@ -165,9 +157,7 @@ async function refreshAllTargets() {
             }
           }
         } else {
-          console.warn(
-            `SVG non trouvé dans le conteneur ${selectorObj.selector}`,
-          );
+          console.warn(`SVG non trouvé dans la cible ${idx + 1}`);
         }
       }
     });
@@ -176,20 +166,39 @@ async function refreshAllTargets() {
   }
 }
 
-// Démarrage
+/**
+ * Convertit les tirs au format [x, y, score10, score100, label]
+ * (programm.html) vers le format attendu par drawShotsOnSvg : {x, y, number}.
+ * Les tirs arrivent dans l'ordre chronologique, alors que drawShotsOnSvg
+ * attend le plus récent en premier : on inverse donc la liste.
+ */
+function shotsFromRows(rows) {
+  return rows
+    .map((row, i) => ({ x: row[0], y: row[1], number: i + 1 }))
+    .reverse();
+}
+
+/**
+ * Page programm : dessine les tirs de chaque série (une seule fois, sans rafraîchissement)
+ */
+function drawStaticShots() {
+  document.querySelectorAll("svg[data-shots]").forEach((svg) => {
+    const rows = JSON.parse(svg.dataset.shots);
+    drawShotsOnSvg(svg, shotsFromRows(rows));
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  // Premier chargement immédiat
-  refreshAllTargets();
-
-  // Puis rafraîchissement toutes les secondes
-  // Use recursive setTimeout to avoid overlapping requests
-  async function loop() {
-    await refreshAllTargets();
-    setTimeout(loop, REFRESH_INTERVAL);
+  // Page target : rafraîchissement automatique depuis l'API
+  if (document.querySelector(".target-container")) {
+    // setTimeout récursif pour éviter que les requêtes se chevauchent
+    const loop = async () => {
+      await refreshAllTargets();
+      setTimeout(loop, REFRESH_INTERVAL);
+    };
+    loop();
   }
-  loop();
 
-  console.log(
-    `Système de mise à jour des cibles démarré (${REFRESH_INTERVAL}s interval)`,
-  );
+  // Page programm : tirs déjà fournis par le serveur
+  drawStaticShots();
 });

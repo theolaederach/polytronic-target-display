@@ -54,11 +54,11 @@ def listen(host: str = HOST, port: int = PORT) -> None:
 
 def handle_connection(conn, addr):
     """Process a single client connection in its own thread."""
-    logger.info("[Thread] Connected %s : %S", addr[0], addr[1])
+    logger.info("[Thread] Connected %s : %s", addr[0], addr[1])
     try:
         with conn.makefile("rb") as f:
             for raw_line in f:
-                line = raw_line.decode("utf-8", errors="replace")
+                line = raw_line.decode("latin-1")
                 try:
                     analyse_data(line)
                 except IndexError as e:
@@ -67,7 +67,7 @@ def handle_connection(conn, addr):
         logger.exception("Connection error %r", addr)
     finally:
         conn.close()
-        logger.info("[Thread] Disconncted %s : %S", addr[0], addr[1])
+        logger.info("[Thread] Disconnected %s : %s", addr[0], addr[1])
 
 
 def analyse_data(data: str = "") -> None:
@@ -77,9 +77,14 @@ def analyse_data(data: str = "") -> None:
     if row == []:
         return
     dataType = row[0]  # (_SHOT, _GRPH, etc.)
-    if {"_PRCH": True, "_GRPH": True, "_SUBT": True, "_PRST": True, "_SHOT": True}.get(
-        dataType
-    ):
+    if {
+        "_NAME": True,
+        "_PRCH": True,
+        "_GRPH": True,
+        "_SUBT": True,
+        "_PRST": True,
+        "_SHOT": True,
+    }.get(dataType):
         target_number = int(row[1])  # base‑0 index
         if not (0 <= target_number < len(targets)):
             logger.error("target number invalid in the listener : %r", target_number)
@@ -93,7 +98,11 @@ def analyse_data(data: str = "") -> None:
         time = datetime.now().strftime("%H:%M:%S.%f")
 
     try:
-        if dataType == "_PRCH":
+        if dataType == "_NAME":
+            name = row[5]
+            targets[target_number].write_shooter(shooter_number, name)
+
+        elif dataType == "_PRCH":
             guid = row[25]
             targets[target_number].start_programm(shooter_number, time, guid)
         elif dataType == "_GRPH":

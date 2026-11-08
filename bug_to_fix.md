@@ -7,7 +7,7 @@ make by claude.ai, with a scan of the git repo
 
 Ces points cassent déjà le fonctionnement : à traiter en premier, ils tiennent en une soirée.
 
-- [x] `database/reader.py` : dans `getShooterNumber` et `getTargetType`, remplacer `WHERE p.GUID = ?` par `WHERE p.id = ?` (la valeur est un id entier depuis le passage guid → id)
+- [x] `database/reader.py` : dans `getShooter` et `getTargetType`, remplacer `WHERE p.GUID = ?` par `WHERE p.id = ?` (la valeur est un id entier depuis le passage guid → id)
 - [x] `database/reader.py` : dans `listLastShot`, remplacer `id LIKE ?` par `id = ?` et ajouter `ORDER BY id` à la lecture des tirs
 - [x] `database/writer.py` : `start_programm` écrit `"A10"` en dur ; lire le type de cible dans le paquet `_PRCH` (si le champ existe) ou le configurer par cible, sinon B4 ne s'affiche jamais
 - [x] `database/writer.py` : corriger `if not None else …` (toujours vrai) dans `start_programm` ; si l'INSERT échoue, ne pas écraser `current_programm_id` par `None`
@@ -18,7 +18,7 @@ Ces points cassent déjà le fonctionnement : à traiter en premier, ils tiennen
 - [x] `server/routes/app_routes.py` : supprimer la route `/test` (le template `test.html` n'existe pas, erreur 500)
 - [x] `database/src/create structure.sql` : supprimer `DROP SCHEMA IF EXISTS` (relancer le script efface toutes les données)
 - [x] `database/src/create structure.sql` : retirer `VISIBLE` des index (syntaxe MySQL 8, probablement refusée par MariaDB — à tester sur un vrai serveur)
-- [x] `database/src/create structure.sql` : `shots.score_base10` en `VARCHAR(45)` → type entier ; corriger la faute `taget_number` (colonne, `writer.py` et `listener.py` à adapter ensemble)
+- [x] `database/src/create structure.sql` : `shots.score_base10` en `VARCHAR(45)` → type entier ; corriger la faute `target_number` (colonne, `writer.py` et `listener.py` à adapter ensemble)
 - [x] Renommer le fichier SQL sans espace (`create_structure.sql`) et aligner le chemin dans le README et `doc.md`
 
 ## Priorité 2 – Robustesse
