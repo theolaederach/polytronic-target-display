@@ -18,7 +18,7 @@ Ces points cassent déjà le fonctionnement : à traiter en premier, ils tiennen
 - [x] `server/routes/app_routes.py` : supprimer la route `/test` (le template `test.html` n'existe pas, erreur 500)
 - [x] `database/src/create structure.sql` : supprimer `DROP SCHEMA IF EXISTS` (relancer le script efface toutes les données)
 - [x] `database/src/create structure.sql` : retirer `VISIBLE` des index (syntaxe MySQL 8, probablement refusée par MariaDB — à tester sur un vrai serveur)
-- [x] `database/src/create structure.sql` : `shots.score_base10` en `VARCHAR(45)` → type entier ; corriger la faute `taget_number` (colonne, `writer.py` et `listener.py` à adapter ensemble)
+- [x] `database/src/create structure.sql` : `shots.score_base10` en `VARCHAR(45)` → type entier ; corriger la faute `target_number` (colonne, `writer.py` et `listener.py` à adapter ensemble)
 - [x] Renommer le fichier SQL sans espace (`create_structure.sql`) et aligner le chemin dans le README et `doc.md`
 
 ## Priorité 2 – Robustesse

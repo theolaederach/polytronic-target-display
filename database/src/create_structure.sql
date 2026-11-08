@@ -48,14 +48,14 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`programm` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `score_base10` SMALLINT UNSIGNED NULL,
   `score_base100` SMALLINT UNSIGNED NULL,
-  `taget_number` TINYINT NOT NULL,
+  `target_number` TINYINT NOT NULL,
   `shooters_id` INT NULL,
   `target_type` VARCHAR(4) NULL,
   `start_time` TIME(2) NOT NULL,
   `end_time` TIME(2) NULL,
   `GUID` VARCHAR(10) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `target_guid_start_UNIQUE` (`taget_number` ASC, `GUID` ASC, `start_time` ASC) ,
+  UNIQUE INDEX `target_guid_start_UNIQUE` (`target_number` ASC, `GUID` ASC, `start_time` ASC) ,
   CONSTRAINT `programm_shooters_FK`
     FOREIGN KEY (shooters_id)
     REFERENCES `polytronic-target-display`.`shooters` (id)

@@ -153,7 +153,7 @@ class InitTarget:
         self.programm_finish(time)
 
         insert_query = (
-            f"INSERT INTO `{DATABASE}`.programm (shooters_id, taget_number, target_type, "
+            f"INSERT INTO `{DATABASE}`.programm (shooters_id, target_number, target_type, "
             "start_time, GUID) VALUES (?, ?, ?, ?, ?)"
         )
         shooter_id, _ = getShooterByNumber(shooter_number)
