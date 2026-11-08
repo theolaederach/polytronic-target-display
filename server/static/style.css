@@ -23,8 +23,8 @@
     --sidebar-width: 260px;
 
     /* Ombres : plus grande surface = plus profonde */
-    --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.05) inset,
-        0 8px 24px rgba(0, 0, 0, 0.25);
+    --shadow-card:
+        0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 8px 24px rgba(0, 0, 0, 0.25);
 
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -42,7 +42,12 @@ body {
     min-height: 100%;
     background-color: var(--bg);
     color: var(--text);
-    font: 100%/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font:
+        100%/1.5 system-ui,
+        -apple-system,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
     font-optical-sizing: auto;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -153,7 +158,9 @@ nav a strong {
 .container {
     background-color: var(--surface);
     border: 1px solid var(--border);
-    border-top-color: var(--border-soft); /* arête haute : la lumière accroche le matériau */
+    border-top-color: var(
+        --border-soft
+    ); /* arête haute : la lumière accroche le matériau */
     border-radius: var(--radius);
     box-shadow: var(--shadow-card);
     padding: 1.25rem 1.5rem;
@@ -163,6 +170,10 @@ nav a strong {
 
 .container h1 {
     margin-top: 0;
+}
+
+.page-link {
+    cursor: pointer;
 }
 
 /* ---------- Formulaire ---------- */
@@ -275,6 +286,32 @@ td.num {
 
 .table-wrapper {
     overflow-x: auto;
+}
+
+/* ---------- Page Programm : tableau à gauche, cible à droite ---------- */
+.serie-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 600px);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.serie-card > h3 {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 1.1rem;
+    letter-spacing: -0.01em;
+}
+
+.serie-card svg {
+    width: 100%;
+    height: auto;
+}
+
+@media (max-width: 1100px) {
+    .serie-card {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 /* ---------- Page Target : la grille remplit exactement la fenêtre ---------- */

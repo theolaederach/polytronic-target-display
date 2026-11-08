@@ -15,30 +15,33 @@
     <script src="{{ url_for('static', filename='js/graphs.js') }}"></script>
     <script>
         const shots = {{ data.shots | tojson }};
-        const shooter_number = {{ data.shooter_number }}
-        console.log(shooter_number)
-        create_line_charts(document.getElementById('shots_stats'), shots)
+        const shooter_number = {{ data.shooter_number }};
+        console.log(shooter_number);
+        create_line_charts(document.getElementById('shots_stats'), shots);
     </script>
 </div>
 {% endif %}
 <table>
     <tr>
-        <th>start time</th>
-        <th>end time</th>
-        <th>target type</th>
-        <th>total base10</th>
-        <th>total base100</th>
-        <th></th>
+        <th>Start time</th>
+        <th>End time</th>
+        <th>Target type</th>
+        <th>Total 10</th>
+        <th>Total 100</th>
     </tr>
 
     {% for i in data.programm %}
-    <tr>
+    <tr
+        class="page-link"
+        role="button"
+        tabindex="0"
+        onclick="location.href='/statistics/programm/{{ i.id }}'"
+    >
         <td>{{ i.start_time }}</td>
         <td>{{ i.end_time }}</td>
         <td>{{ i.target_type }}</td>
-        <td>{{ i.score_base10 }}</td>
-        <td>{{ i.score_base100 }}</td>
-        <td><a href="/statistics/programm/{{ i.id }}">➡️</a></td>
+        <td>{{ i.score_base10 }} pts</td>
+        <td>{{ i.score_base100 }} pts</td>
     </tr>
     {% endfor %}
 </table>

@@ -166,4 +166,39 @@ async function refreshAllTargets() {
   }
 }
 
+/**
+ * Convertit les tirs au format [x, y, score10, score100, label]
+ * (programm.html) vers le format attendu par drawShotsOnSvg : {x, y, number}.
+ * Les tirs arrivent dans l'ordre chronologique, alors que drawShotsOnSvg
+ * attend le plus récent en premier : on inverse donc la liste.
+ */
+function shotsFromRows(rows) {
+  return rows
+    .map((row, i) => ({ x: row[0], y: row[1], number: i + 1 }))
+    .reverse();
+}
 
+/**
+ * Page programm : dessine les tirs de chaque série (une seule fois, sans rafraîchissement)
+ */
+function drawStaticShots() {
+  document.querySelectorAll("svg[data-shots]").forEach((svg) => {
+    const rows = JSON.parse(svg.dataset.shots);
+    drawShotsOnSvg(svg, shotsFromRows(rows));
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Page target : rafraîchissement automatique depuis l'API
+  if (document.querySelector(".target-container")) {
+    // setTimeout récursif pour éviter que les requêtes se chevauchent
+    const loop = async () => {
+      await refreshAllTargets();
+      setTimeout(loop, REFRESH_INTERVAL);
+    };
+    loop();
+  }
+
+  // Page programm : tirs déjà fournis par le serveur
+  drawStaticShots();
+});
