@@ -10,7 +10,7 @@ import mariadb
 
 logger = logging.getLogger(__name__)
 
-from database.connection import DATABASE, _get_connection, execute_request
+from database.connection import _get_connection, execute_request
 
 
 def get_current(target_number: int) -> tuple[int | None, int | None]:
@@ -51,15 +51,14 @@ class InitTarget:
         self.current_serie_id: int | None
 
         # create the reference of the current target in the db
-        query_set_current = f"""
-        INSERT INTO `{DATABASE}`.`current`
-        (target_number, programm_id, series_id)
-        SELECT ?, NULL, NULL
-        WHERE NOT EXISTS (
-            SELECT 1 FROM `{DATABASE}`.`current`
-            WHERE `{DATABASE}`.`current`.target_number = ?
-        );
-        """
+        query_set_current = (
+            "INSERT INTO `current` "
+            "(target_number, programm_id, series_id) "
+            "SELECT ?, NULL, NULL "
+            "WHERE NOT EXISTS ( "
+            "    SELECT 1 FROM `current` "
+            "    WHERE `current`.target_number = ?);"
+        )
         args = (self.target_number, self.target_number)
         self._execute_write(query_set_current, args)
 
@@ -67,11 +66,11 @@ class InitTarget:
         self._update()
 
     def _update(self) -> None:
-        query_get_current_id = f"""
-            SELECT c.programm_id, c.series_id
-            FROM `{DATABASE}`.`current` c
-            WHERE c.target_number = ?;
-        """
+        query_get_current_id = (
+            "SELECT c.programm_id, c.series_id "
+            "FROM `current` c "
+            "WHERE c.target_number = ?;"
+        )
         currents_id = execute_request(query_get_current_id, (self.target_number,))
         if currents_id:
             for data in currents_id:
@@ -138,7 +137,7 @@ class InitTarget:
         insert_query = (
             "INSERT INTO `polytronic-target-display`.shooters (shooter_number, name) "
             "VALUES (?, ?) "
-            "ON DUPLICATE KEY UPDATE"
+            "ON DUPLICATE KEY UPDATE "
             "    name = VALUES(name);"
         )
 
@@ -153,7 +152,7 @@ class InitTarget:
         self.programm_finish(time)
 
         insert_query = (
-            f"INSERT INTO `{DATABASE}`.programm (shooters_id, target_number, target_type, "
+            "INSERT INTO programm (shooters_id, target_number, target_type, "
             "start_time, GUID) VALUES (?, ?, ?, ?, ?)"
         )
         shooter_id, _ = getShooterByNumber(shooter_number)
@@ -175,11 +174,7 @@ class InitTarget:
         self.current_programm_id = new_id
 
         # update the current programm_id on the db
-        update_query = f"""
-        UPDATE `{DATABASE}`.`current`
-        SET programm_id = ?
-        WHERE target_number = ?;
-        """
+        update_query = "UPDATE `current`SET programm_id = ?WHERE target_number = ?;"
         self._execute_write(update_query, (new_id, self.target_number))
 
     def start_serie(self, serie_type: int, time: str, guid: str) -> None:
@@ -194,7 +189,7 @@ class InitTarget:
             return
 
         insert_query = (
-            f"INSERT INTO `{DATABASE}`.series (programm_id, type, start_time, "
+            "INSERT INTO series (programm_id, type, start_time, "
             "`show`, GUID) VALUES (?, ?, ?, ?, ?)"
         )
         showed = 0 if serie_type == 2 else 1
@@ -205,11 +200,7 @@ class InitTarget:
             get_id=True,
         )
 
-        update_query = f"""
-        UPDATE `{DATABASE}`.`current`
-        SET series_id = ?
-        WHERE target_number = ?;
-        """
+        update_query = "UPDATE `current`SET series_id = ?WHERE target_number = ?;"
 
         if new_id is None:
             # INSERT failed (duplicate GUID, DB down...) : keep the previous state
@@ -233,8 +224,8 @@ class InitTarget:
         if not self.current_serie_id:
             return
         update_query = (
-            f"UPDATE `{DATABASE}`.series SET `show` = ?,"
-            " score_base10 = ?, score_base100 = ?, end_time = ? WHERE id = ?"
+            "UPDATE series SET `show` = ?, "
+            "score_base10 = ?, score_base100 = ?, end_time = ? WHERE id = ?"
         )
         score_base10 = sum(listScore(self.current_serie_id, "shots", max=10))
         score_base100 = sum(listScore(self.current_serie_id, "shots", max=100))
@@ -251,8 +242,8 @@ class InitTarget:
         score_base10 = sum(listScore(self.current_programm_id, "series", max=10))
         score_base100 = sum(listScore(self.current_programm_id, "series", max=100))
         update_query = (
-            f"UPDATE `{DATABASE}`.programm SET score_base10 = ?,"
-            " score_base100 = ?, end_time = ? WHERE id = ?"
+            "UPDATE programm SET score_base10 = ?, "
+            "score_base100 = ?, end_time = ? WHERE id = ?"
         )
         self._execute_write(
             update_query,
@@ -277,8 +268,8 @@ class InitTarget:
             return
 
         insert_query = (
-            f"INSERT INTO `{DATABASE}`.shots (x, y, time,"
-            " score_base10, score_base100, series_id, GUID) VALUES (?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO shots (x, y, time, score_base10, score_base100, series_id, GUID) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)"
         )
         self._execute_write(
             insert_query,
