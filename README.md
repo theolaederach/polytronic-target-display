@@ -2,21 +2,103 @@
 
 ## Quick start
 
-The project visualises live target‑shooting data received over a TCP socket. Data packets are parsed, stored in a MariaDB database, and served via a lightweight Flask API that a vanilla‑JS front‑end consumes.
+The project visualises live target‑shooting data received over a TCP socket.
+With polytronic target system, you have to use the official software on windows. When the software run, it send all the data on the port `4000` over the TCP.
+Data packets are parsed, stored in a MariaDB database, and served via a lightweight Flask API that a vanilla‑JS front‑end consumes.
+
+![screen-target-page](screenshots/Screenshot-Target-Display.png)
+
+<details><summary>data from the tcp exemple :</summary>
+
+### Example of data the listener recieve (without useless data)
+
+```python
+# a shooter scan his stand's sheet's code bar
+_NAME;3;4;1839;0;Shooter_name
+
+# begin of a programm
+_PRCH;3;4;1839;60;2;12:08:43.74;0;0;4;0;0;0;82;4;0;0;1839;0;0;0;0;0;0;0;2199063379
+
+# begin of a serie
+_GRPH;3;4;1839;60;11;12:09:39.26;8;0;0;0;0;0;1;2199068925
+# shots
+_SHOT;3;4;1839;60;12;12:09:39.46;3;0;2080;7;63;0;1;0.10984185;-0.15459728;900;0;0;655.35;2199068858;1;800;0
+_SHOT;3;4;1839;60;13;12:09:50.44;3;0;2080;9;85;0;2;-0.05988752;-0.05386031;900;0;0;655.35;2199070032;1;800;0
+# end of a serie
+_SUBT;3;4;1839;60;14;12:10:03.40;7;0;0;0;2199071342
+
+# begin of a serie
+_GRPH;3;4;1839;60;15;12:10:19.19;8;0;1;1;0;0;1;2199072958
+# shots
+_SHOT;3;4;1839;60;16;12:10:19.58;3;0;2048;7;63;0;1;-0.04083079;-0.18700367;900;0;0;655.35;2199072919;1;800;0
+_SHOT;3;4;1839;60;17;12:10:20.38;3;0;2048;10;91;0;2;0.00059842;0.05212176;900;0;0;655.35;2199072984;1;800;0
+_SHOT;3;4;1839;60;18;12:10:20.97;3;0;2048;9;87;0;3;-0.06805410;-0.01731354;900;0;0;655.35;2199073032;1;800;0
+_SHOT;3;4;1839;60;19;12:10:21.95;3;0;2048;8;79;0;4;-0.10944988;-0.01268458;900;0;0;655.35;2199073082;1;800;0
+_SHOT;3;4;1839;60;20;12:10:22.56;3;0;2048;8;79;0;5;0.01755792;-0.11199880;900;0;0;655.35;2199073142;1;800;0
+# end of a serie
+_SUBT;3;4;1839;60;33;12:11:49.50;7;0;41;385;2199081970
+
+# signal the end of the programm
+_PRST;3;4;1839;51;0
+
+```
+
+### data explication
+
+for a random shot
+
+```
+_SHOT -> Data type
+3 -> target number, start at 0
+4 -> target number, start at 1
+1839 -> shooter number
+60 -> ? (same everywhere)
+2 -> the data's id (reset after reboot)
+12:08:43.74 -> time
+3 -> ? (same everywhere)
+0 -> ? (same everywhere)
+2048 -> ? (same everywhere)
+9 -> Score 10 based (score between 0-10)
+90 -> Score 100 based (score between 0-100)
+0 -> ? (same everywhere)
+7 -> the number of the shot in the series
+-0.04698670 -> x impact's pos
+0.03425682 -> y impact's pos
+900 -> ? (same everywhere)
+0 -> ? (same everywhere)
+0 -> ? (same everywhere)
+655.35 -> ? (same everywhere)
+2199073245 -> the GUID (unique, don't reset after reboot)
+1 -> ? (same everywhere)
+800 -> ? (same everywhere)
+0 ? (same everywhere)
+```
+
+</details>
+
+## Features
+
+- shots shows in live, to display on a tv.
+  ![screen-target-page](screenshots/Screenshot-Target-Display-Fullscreen.png)
+- Graph of average shots of a shooter
+  ![screen-target-page](screenshots/Screenshot-Target-Display-graph.png)
+- history of the last programm for each shooter
+  ![screen-target-page](screenshots/Screenshot-Target-Display-history.png)
 
 ---
 
 ## Prerequisites
 
-| Item        | Minimum       | Notes                                            |
-| ----------- | ------------- | ------------------------------------------------ |
-| **Python**  | 3.11 or newer | The project is written in pure Python.           |
-| **pip**     | –             | Python’s package manager.                        |
-| **MariaDB** | 10.5+         | Any server compatible with the `mariadb` driver. |
+| Item                | Minimum       | Notes                                                            |
+| ------------------- | ------------- | ---------------------------------------------------------------- |
+| **Python**          | 3.11 or newer | The project is written in pure Python.                           |
+| **pip**             | –             | Python’s package manager.                                        |
+| **MariaDB**         | 10.5+         | Any server compatible with the `mariadb` driver.                 |
+| **A pc on windows** | 8, 10 or 11   | To run the polytronic's software, this server can also run on it |
 
 ---
 
-## Installation
+## Installation (Manual)
 
 ```bash
 # 1. Clone the repository
@@ -120,56 +202,63 @@ Press `Ctrl+C` in the terminal that ran `app.py` – both the Flask server and t
 
 ## To do
 
-- [x] make the target on the web page responsive
-- [x] auto change the type of target on the webpage
-- [ ] Add charts and statistics for each shooter
 - [ ] Make the home page of the website
 - [ ] Create an auto-install script
 - [ ] print auto-genereted stand sheet
-- [ ] Use the `_NAME` from the database in a shooter table.
 - [ ] Add a `date` column to `programm` table
+- [ ] Add a zone for sponsors and results table
+
+<details><summary>Alreader done</summary>
+
+- [x] make the target on the web page responsive
+- [x] auto change the type of target on the webpage
+- [x] Add charts and statistics for each shooter
+- [x] Use the `_NAME` from the database in a shooter table.
 - [x] Make the web server and the listener independant
 - [x] change the `guid` by the `id` of the `shots`/`series`/`programm` and add a table of the `curreent` `shots`/`series`/`programm` for each target.
+
+</details>
 
 ---
 
 ## Project layout
 
 ```
-polytronic-target-display/ # Project root
-├─ main.py # Entry point – starts Flask and the TCP listener
-├─ listener.py # TCP listener and semicolon‑delimited packet parser
-├─ database/ # Data‑layer package
-│  ├─ connection.py # MariaDB connections and parameterized queries
-│  ├─ reader.py # Database read helpers for the API
-│  ├─ writer.py # InitTarget state manager and write helpers
+polytronic‑target‑display/                       # project root
+├─ main.py                                      # entry point (Flask + listener)
+├─ listener.py                                  # TCP listener + parser
+├─ database/                                    # data‑access layer
+│  ├─ __init__.py
+│  ├─ connection.py
+│  ├─ reader.py
+│  ├─ writer.py
 │  └─ src/
-│     └─ create_structure.sql # MariaDB schema
-├─ server/ # Flask application and browser interface
-│  ├─ app.py # Flask app and blueprint registration
+│      └─ create_structure.sql                 # MariaDB schema
+├─ server/                                      # Flask app + web interface
+│  ├─ app.py
 │  ├─ api/
-│  │  └─ shots.py # GET /api/shots endpoint
+│  │  └─ shots.py
 │  ├─ routes/
-│  │  └─ app_routes.py # HTML page routes
-│  ├─ static/ # Browser assets served by Flask
-│  │  ├─ assets/ # Target images
+│  │  └─ app_routes.py
+│  ├─ static/
+│  │  ├─ assets/                               # target images
+│  │  │  └─ target_A10.png
 │  │  ├─ js/
-│  │  │  └─ update-target.js # Polls the API and draws SVG crosshairs
+│  │  │  └─ update‑target.js
 │  │  ├─ favicon.ico
 │  │  ├─ fullscreen.css
 │  │  └─ style.css
-│  └─ templates/ # Jinja2 templates
-│     ├─ home.html
-│     ├─ target.html
-│     ├─ target_fs.html
-│     └─ credits.html
-├─ requirements.txt # Python dependencies
-├─ .gitignore # Git ignore rules
-├─ .env.example # Environment variable template
-├─ README.md # Quick start guide
-├─ AGENTS.md # AI‑friendly quick reference
-└─ doc.md # Full documentation (this file)
-
+│  └─ templates/
+│      ├─ home.html
+│      ├─ target.html
+│      ├─ target_fs.html
+│      └─ credits.html
+├─ requirements.txt
+├─ .gitignore
+├─ .env.example
+├─ README.md
+├─ AGENTS.md
+└─ doc.md
 ```
 
 ---
@@ -180,8 +269,6 @@ Feel free to fork, create feature branches, and submit pull requests. Please kee
 
 ---
 
+Please appreciate the work we’ve put in; my brother and I spent four hours analysing each line, one by one, to understand the values. [Look what we've done!](#data-explication)
+
 > Made by [theolaederach](https://github.com/theolaederach) – co‑authored with AI.
-
-```
-
-```
