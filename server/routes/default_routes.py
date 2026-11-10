@@ -1,3 +1,4 @@
+import json
 import os
 
 from dotenv import load_dotenv
@@ -16,7 +17,12 @@ routes = Blueprint("default_routes", __name__, template_folder="templates")
 
 @routes.route("/")
 def home():
-    return render_template("home.html")
+    try:
+        with open("weather.json", "r") as json_file:
+            weather_data = json.load(json_file)
+    except FileNotFoundError:
+        weather_data = {}
+    return render_template("home.html", weather=weather_data)
 
 
 @routes.route("/target")

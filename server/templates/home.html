@@ -12,88 +12,51 @@ width .span-12 -> full width To remove a block, delete its
         <h1>Home</h1>
 
         <div class="home-grid">
-            {# ---------- Row 1 : key figures (stat tiles) ---------- #} {#
-            TEMPLATE: replace the "--" values with real data (API or Jinja) #}
-            <section class="container span-3 stat-tile">
-                <span class="stat-label">Shooters</span>
-                <span class="stat-value" id="stat_shooters">--</span>
-            </section>
-            <section class="container span-3 stat-tile">
-                <span class="stat-label">Programs today</span>
-                <span class="stat-value" id="stat_programs">--</span>
-            </section>
-            <section class="container span-3 stat-tile">
-                <span class="stat-label">Shots today</span>
-                <span class="stat-value" id="stat_shots">--</span>
-            </section>
 
-            {# ---------- Row 2 : main chart + secondary chart ---------- #}
-            <section class="container span-8">
-                <h2>Score over time</h2>
-                {# The canvas needs a sized wrapper, otherwise Chart.js grows
-                forever #}
-                <div class="chart-box">
-                    <canvas id="home_line_chart"></canvas>
-                </div>
-            </section>
-            <section class="container span-4">
-                <h2>Score distribution</h2>
-                <div class="chart-box">
-                    <canvas id="home_doughnut_chart"></canvas>
+            <!-- Weather stats -->
+            <section class="container span-1 weather-icone">
+                <div>
+                    <img
+                        src="https://openweathermap.org/img/wn/{{ weather.data.weather[0].icon }}@2x.png"
+                        alt="{{ weather.data.weather[0].description }}"
+                        id="weather_icon"
+                        width="auto"
+                    />
                 </div>
             </section>
 
-            {# ---------- Row 3 : results table + live status ---------- #}
-            <section class="container span-8">
-                <h2>Latest results</h2>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Shooter</th>
-                                <th>Target type</th>
-                                <th class="num">Score 10</th>
-                                <th class="num">Score 100</th>
-                            </tr>
-                        </thead>
-                        {# TEMPLATE: filled by home.js, replace with a Jinja
-                        loop if you prefer #}
-                        <tbody id="home_results_body"></tbody>
-                    </table>
-                </div>
-            </section>
-            <section class="container span-4">
-                <h2>Live status</h2>
-                {# TEMPLATE: free zone, e.g. "last packet received X s ago" (see
-                bug_to_fix.md) #}
-                <ul class="status-list">
-                    <li>
-                        <span>Listener</span><span class="badge">unknown</span>
-                    </li>
-                    <li>
-                        <span>Database</span><span class="badge">unknown</span>
-                    </li>
-                    <li>
-                        <span>Active targets</span><span class="badge">--</span>
-                    </li>
-                </ul>
+            <section class="container span-2 stat-tile">
+                <span class="stat-label">Temperature</span>
+                <span class="stat-value" id="temp"
+                    >{{ weather.data.main.temp }} °C
+                </span>
             </section>
 
-            {# ---------- Row 4 : full-width free zone (sponsors, news, ...)
-            ---------- #}
-            <section class="container span-12">
-                <h2>Sponsors</h2>
-                {# TEMPLATE: put a slideshow, logos or any text here #}
-                <p class="placeholder">
-                    Free zone: sponsors, announcements, schedule...
-                </p>
+            <section class="container span-3 stat-tile">
+                <span class="stat-label">Wind speed</span>
+                <span class="stat-value" id="wind_speed"
+                    >{{ weather.data.wind.speed }} Km/h
+                </span>
             </section>
-        </div>
 
-        {% endblock %} {% block scripts %}
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="{{ url_for('static', filename='js/home.js') }}"></script>
+            <section class="container span-2 stat-tile">
+                <span class="stat-label">Pressure</span>
+                <span class="stat-value" id="pressure"
+                    >{{ weather.data.main.pressure }} hPa
+                </span>
+            </section>
+            <section class="container span-2 stat-tile">
+                <span class="stat-label">Humidity</span>
+                <span class="stat-value" id="humidity"
+                    >{{ weather.data.main.humidity }} %
+                </span>
+            </section>
+            <section class="container span-2 stat-tile">
+                <span class="stat-label">Visibility</span>
+                <span class="stat-value" id="visibility"
+                    >{{ weather.data.visibility }} m
+                </span>
+            </section>
         {% endblock %}
     </section>
 </section>

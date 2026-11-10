@@ -375,7 +375,18 @@ td.num {
     margin: 0 0 1rem;
 }
 
+.weather-icone {
+    padding: 0%;
+    background-color: var(--accent-contrast);
+}
+
 /* Largeurs possibles pour une carte (nombre de colonnes sur 12) */
+.span-1 {
+    grid-column: span 1;
+}
+.span-2 {
+    grid-column: span 2;
+}
 .span-3 {
     grid-column: span 3;
 }
