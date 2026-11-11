@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`programm` (
   `target_number` TINYINT NOT NULL,
   `shooters_id` INT NULL,
   `target_type` VARCHAR(4) NULL,
+  `date` DATE NULL,
   `start_time` TIME(2) NOT NULL,
   `end_time` TIME(2) NULL,
   `GUID` VARCHAR(10) NOT NULL,

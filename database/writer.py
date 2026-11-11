@@ -5,6 +5,7 @@
 #               and manage the target with InitTarget()
 import logging
 import os
+from datetime import date
 
 import mariadb
 
@@ -153,12 +154,13 @@ class InitTarget:
 
         insert_query = (
             "INSERT INTO programm (shooters_id, target_number, target_type, "
-            "start_time, GUID) VALUES (?, ?, ?, ?, ?)"
+            "start_time, `date`, GUID) VALUES (?, ?, ?, ?, ?, ?)"
         )
         shooter_id, _ = getShooterByNumber(shooter_number)
+        current_date = date.today()
         new_id = self._execute_write(
             insert_query,
-            (shooter_id, self.target_number, target_type, time, guid),
+            (shooter_id, self.target_number, target_type, time, current_date, guid),
             get_id=True,
         )
 
@@ -174,7 +176,7 @@ class InitTarget:
         self.current_programm_id = new_id
 
         # update the current programm_id on the db
-        update_query = "UPDATE `current`SET programm_id = ?WHERE target_number = ?;"
+        update_query = "UPDATE `current`SET programm_id = ? WHERE target_number = ?;"
         self._execute_write(update_query, (new_id, self.target_number))
 
     def start_serie(self, serie_type: int, time: str, guid: str) -> None:
@@ -200,7 +202,7 @@ class InitTarget:
             get_id=True,
         )
 
-        update_query = "UPDATE `current`SET series_id = ?WHERE target_number = ?;"
+        update_query = "UPDATE `current`SET series_id = ? WHERE target_number = ?;"
 
         if new_id is None:
             # INSERT failed (duplicate GUID, DB down...) : keep the previous state
