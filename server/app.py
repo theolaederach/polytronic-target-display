@@ -8,6 +8,7 @@ from flask import Flask
 
 from server.api import api
 from server.routes import routes
+from server.weather import startWeatherUpdater
 
 app = Flask(__name__)
 
@@ -16,4 +17,5 @@ app.register_blueprint(routes, url_prefix="/")
 
 
 def startWebServer(host: str = "0.0.0.0", port: int = 5000, debug: bool = False):
+    startWeatherUpdater()
     app.run(host=host, port=port, debug=debug, use_reloader=False)

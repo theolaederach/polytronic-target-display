@@ -1,5 +1,8 @@
+# sensibles files
 .env
+weather.json
 
+# testing files
 test.*
 
 

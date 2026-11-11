@@ -1,7 +1,10 @@
+import json
 import os
 
 from dotenv import load_dotenv
 from flask import Blueprint, render_template
+
+import database.reader as r
 
 load_dotenv()
 try:
@@ -16,7 +19,13 @@ routes = Blueprint("default_routes", __name__, template_folder="templates")
 
 @routes.route("/")
 def home():
-    return render_template("home.html")
+    try:
+        with open("weather.json", "r") as json_file:
+            weather_data = json.load(json_file)
+    except FileNotFoundError:
+        weather_data = {}
+    chart_data = {"programm_counter": r.getProgrammCountByTarget()}
+    return render_template("home.html", weather=weather_data, charts=chart_data)
 
 
 @routes.route("/target")

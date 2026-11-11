@@ -1,1 +1,121 @@
-{% extends "base.html" %} {% block content %} {% endblock %}
+{% extends "base.html" %} {% block title %}Home - Target Display{% endblock %}
+{% block content %}
+
+<h1>Home</h1>
+
+<div class="home-grid">
+    <!-- Weather stats -->
+    <section class="container span-1 weather-icone">
+        <div>
+            <img
+                src="https://openweathermap.org/img/wn/{{ weather.data.weather[0].icon }}@2x.png"
+                alt="{{ weather.data.weather[0].description }}"
+                id="weather_icon"
+                width="auto"
+            />
+        </div>
+    </section>
+
+    <section class="container span-2 stat-tile">
+        <span class="stat-label">Temperature</span>
+        <span class="stat-value" id="temp"
+            >{{ weather.data.main.temp }} °C
+        </span>
+    </section>
+
+    <section class="container span-3 stat-tile">
+        <span class="stat-label">Wind speed</span>
+        <span class="stat-value" id="wind_speed"
+            >{{ weather.data.wind.speed }} Km/h
+        </span>
+    </section>
+
+    <section class="container span-2 stat-tile">
+        <span class="stat-label">Pressure</span>
+        <span class="stat-value" id="pressure"
+            >{{ weather.data.main.pressure }} hPa
+        </span>
+    </section>
+    <section class="container span-2 stat-tile">
+        <span class="stat-label">Humidity</span>
+        <span class="stat-value" id="humidity"
+            >{{ weather.data.main.humidity }} %
+        </span>
+    </section>
+    <section class="container span-2 stat-tile">
+        <span class="stat-label">Visibility</span>
+        <span class="stat-value" id="visibility"
+            >{{ weather.data.visibility }} m
+        </span>
+    </section>
+
+    <!-- Second row -->
+    <!-- Charts -->
+    <section class="container span-4">
+        <h2>Type of weapons</h2>
+        <div class="chart-box">
+            <canvas id="weapons_chart"></canvas>
+        </div>
+    </section>
+
+    <!-- scoreboard -->
+    <section class="container span-8">
+        <h2>Best results</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Shooter</th>
+                        <th>Weapon</th>
+                        <th>Category</th>
+                        <th class="num">Score 10</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in range(5) %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>x</td>
+                        <td>x</td>
+                        <td>x</td>
+                        <td class="num">0</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <!-- Programms per target and per day -->
+    <section class="container span-12">
+        <h2>Programms per target</h2>
+        <div class="chart-box">
+            <canvas id="programm_chart"></canvas>
+        </div>
+    </section>
+
+    {% endblock %} {% block scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/home.js') }}"></script>
+    <script>
+        const programm_counter_data = {{ charts.programm_counter | tojson }};
+        const PLACEHOLDER_DISTRIBUTION = {
+            labels: ["fass 90", "mq", "f57 03", "f57 02"],
+            values: [40, 12, 16, 8],
+        };
+        document.addEventListener("DOMContentLoaded", () => {
+            applyChartTheme();
+
+            createWeaponsChart(
+                document.getElementById("weapons_chart"),
+                PLACEHOLDER_DISTRIBUTION,
+            );
+            createProgrammChart(
+                document.getElementById("programm_chart"),
+                programm_counter_data,
+            );
+
+        });
+    </script>
+    {% endblock %}
+</div>

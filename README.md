@@ -164,6 +164,9 @@ Required variables:
 | `HOST_WEB_SERVER`      | Host to bind the Flask server                 | `0.0.0.0`                               |
 | `PORT_WEB_SERVER`      | Port for the Flask server (default `5000`)    | `5000`                                  |
 | `NumberOfTarget`       | Number of targets to initialise (default `5`) | `5`                                     |
+| `OPENWEATHER_API_KEY`  | The api key to get the weather on the webpage | `ahjsbrev36ab81na81ns8rn329a`           |
+| `OPENWEATHER_LAT`      | The **latitude** of the stand                 | `46.9041`                               |
+| `OPENWEATHER_LON`      | The **longitude** of the stand                | `7.5957`                                |
 
 ---
 

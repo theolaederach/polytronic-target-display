@@ -403,3 +403,64 @@ def getAllSeriesIdByProgrammId(programm_id) -> list[int]:
         series_ids.append(int(id[0]))
 
     return series_ids
+
+
+def getProgrammCountByTarget() -> dict:
+    """
+    Count the programms of each target for each day, formatted for a
+    Chart.js grouped bar chart.
+
+    Args :
+        None
+
+    Return :
+        {
+            "labels": list[str],  # x axis, one label per day
+            "datasets": [
+                {"label": str, "data": list[int]},  # one dataset per target
+                ...
+            ],
+        }
+        Both lists are empty if there is no programm or if the request fails.
+    """
+    # TEMP: shooters_id replaces the day until the date column exists.
+    # Once it is added, replace both "p.shooters_id" by the date column.
+    request = (
+        "SELECT p.target_number, p.shooters_id AS day_key, "
+        "COUNT(p.id) AS number_of_programm "
+        "FROM programm p "
+        "GROUP BY p.target_number, p.shooters_id "
+        "ORDER BY day_key, p.target_number;"
+    )
+
+    try:
+        reponse = execute_request(request, ())
+    except mariadb.Error:
+        logger.exception("Can't get the number of programm by target")
+        return {"labels": [], "datasets": []}
+
+    if not reponse:
+        return {"labels": [], "datasets": []}
+
+    # pivot the rows into {day: {target: count}}
+    # the dict keeps the order of the rows, already sorted by day in SQL
+    counts: dict[str, dict[int, int]] = {}
+    targets: set[int] = set()
+    for target_number, day_key, number_of_programm in reponse:
+        day = str(day_key) if day_key is not None else "unknown"
+        counts.setdefault(day, {})[int(target_number)] = int(number_of_programm)
+        targets.add(int(target_number))
+
+    labels: list[str] = list(counts)
+
+    # one dataset per target, 0 when the target had no programm that day
+    # target_number is zero-based in the database, the display is one-based
+    datasets: list[dict] = [
+        {
+            "label": f"Target {target + 1}",
+            "data": [counts[day].get(target, 0) for day in labels],
+        }
+        for target in sorted(targets)
+    ]
+
+    return {"labels": labels, "datasets": datasets}
