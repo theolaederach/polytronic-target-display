@@ -423,21 +423,16 @@ def getProgrammCountByTarget() -> dict:
         }
         Both lists are empty if there is no programm or if the request fails.
     """
-    # TEMP: shooters_id replaces the day until the date column exists.
-    # Once it is added, replace both "p.shooters_id" by the date column.
+
     request = (
-        "SELECT p.target_number, p.shooters_id AS day_key, "
+        "SELECT p.target_number, p.`date` AS day_key, "
         "COUNT(p.id) AS number_of_programm "
         "FROM programm p "
-        "GROUP BY p.target_number, p.shooters_id "
+        "GROUP BY p.target_number, p.`date` "
         "ORDER BY day_key, p.target_number;"
     )
 
-    try:
-        reponse = execute_request(request, ())
-    except mariadb.Error:
-        logger.exception("Can't get the number of programm by target")
-        return {"labels": [], "datasets": []}
+    reponse = execute_request(request, ())
 
     if not reponse:
         return {"labels": [], "datasets": []}
