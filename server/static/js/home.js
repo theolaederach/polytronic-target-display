@@ -76,6 +76,7 @@ function createProgrammChart(canvas, data) {
       datasets: data.datasets.map((dataset, i) => ({
         ...dataset,
         backgroundColor: colors[i % colors.length],
+        borderRadius: 5,
       })),
     },
     options: {
