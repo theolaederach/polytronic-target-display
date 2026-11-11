@@ -44,18 +44,46 @@ function createWeaponsChart(canvas, distribution) {
       datasets: [
         {
           data: distribution.values,
-          backgroundColor: [
-            "#F26963",
-            "#6366F1",
-            "#63F297",
-            "#F2D763",
-          ],
+          backgroundColor: ["#F26963", "#6366F1", "#63F297", "#F2D763"],
           borderWidth: 0,
         },
       ],
     },
     options: {
       maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom" } },
+    },
+  });
+}
+
+/**
+ * Draw the grouped bar chart "Programms per target".
+ *
+ * Args :
+ *     canvas (HTMLCanvasElement): the canvas to draw in.
+ *     data (object): { labels: string[], datasets: [{ label: string, data: number[] }] }.
+ *
+ * Return :
+ *     The Chart.js instance (Chart).
+ */
+function createProgrammChart(canvas, data) {
+  const colors = ["#F26963", "#6366F1", "#63F297", "#F2D763", "#11A1E1"];
+  return new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: data.labels,
+      // give a color to each target (the datasets come from the server)
+      datasets: data.datasets.map((dataset, i) => ({
+        ...dataset,
+        backgroundColor: colors[i % colors.length],
+      })),
+    },
+    options: {
+      maintainAspectRatio: false,
+      scales: {
+        // a number of programms is always an integer
+        y: { beginAtZero: true, ticks: { precision: 0 } },
+      },
       plugins: { legend: { position: "bottom" } },
     },
   });

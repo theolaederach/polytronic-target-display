@@ -86,10 +86,19 @@
             </table>
         </div>
     </section>
+    <!-- Programms per target and per day -->
+    <section class="container span-12">
+        <h2>Programms per target</h2>
+        <div class="chart-box">
+            <canvas id="programm_chart"></canvas>
+        </div>
+    </section>
+
     {% endblock %} {% block scripts %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='js/home.js') }}"></script>
     <script>
+        const programm_counter_data = {{ charts.programm_counter | tojson }};
         const PLACEHOLDER_DISTRIBUTION = {
             labels: ["fass 90", "mq", "f57 03", "f57 02"],
             values: [40, 12, 16, 8],
@@ -101,6 +110,11 @@
                 document.getElementById("weapons_chart"),
                 PLACEHOLDER_DISTRIBUTION,
             );
+            createProgrammChart(
+                document.getElementById("programm_chart"),
+                programm_counter_data,
+            );
+
         });
     </script>
     {% endblock %}

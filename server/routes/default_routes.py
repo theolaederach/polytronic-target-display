@@ -4,6 +4,8 @@ import os
 from dotenv import load_dotenv
 from flask import Blueprint, render_template
 
+import database.reader as r
+
 load_dotenv()
 try:
     numberOfTarget = int(
@@ -22,7 +24,8 @@ def home():
             weather_data = json.load(json_file)
     except FileNotFoundError:
         weather_data = {}
-    return render_template("home.html", weather=weather_data)
+    chart_data = {"programm_counter": r.getProgrammCountByTarget()}
+    return render_template("home.html", weather=weather_data, charts=chart_data)
 
 
 @routes.route("/target")
