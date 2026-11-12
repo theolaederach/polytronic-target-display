@@ -1,11 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
   const shooter_selector = document.getElementById("shooter_selector");
+  const dates_selector = document.getElementById("dates_selector");
   const api_shooters = "/api/shooters/name/all";
 
   async function get_all_shooters() {
     const request = await fetch(api_shooters);
     const reponse = await request.json();
     reponse.shooters_number.forEach(append_shooter_name);
+    reponse.dates.forEach(append_dates);
   }
   function append_shooter_name(item) {
     const new_option = document.createElement("option");
@@ -14,6 +16,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     shooter_selector.appendChild(new_option);
   }
+  function append_dates(item) {
+    const new_option = document.createElement("option");
+    const date = new Date(item);
+    const formattedDate = date.toISOString().split("T")[0]; // **2026-11-12**
+    new_option.value = formattedDate;
+    new_option.text = formattedDate;
+
+    dates_selector.appendChild(new_option);
+  }
 
   get_all_shooters();
 
@@ -21,8 +32,9 @@ document.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     const shooter = shooter_selector.value;
+    const date = dates_selector.value;
     if (shooter) {
-      window.location.href = `/statistics/${shooter}`;
+      window.location.href = `/statistics/${shooter}/${date}`;
     }
   });
 });

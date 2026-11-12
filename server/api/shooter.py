@@ -12,5 +12,5 @@ api_shooters = Blueprint("api_shooters", __name__, template_folder="templates")
 
 @api_shooters.route("/name/all")
 def allShooters():
-    reponse = {"shooters_number": r.getAllShooters()}
+    reponse = {"shooters_number": r.getAllShooters(), "dates": r.getAllDates()}
     return jsonify(reponse)
