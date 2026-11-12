@@ -21,6 +21,7 @@
 
     --radius: 12px;
     --sidebar-width: 260px;
+    --sidebar-glass-overlay: rgba(11, 18, 32, 0.94);
 
     /* Ombres : plus grande surface = plus profonde */
     --shadow-card:
@@ -144,6 +145,53 @@ nav a[aria-current="page"] {
 
 nav a strong {
     font-weight: inherit;
+}
+
+/* ---------- Sidebar toggle + backdrop : hidden on desktop ---------- */
+.nav-toggle,
+.nav-backdrop {
+    display: none;
+}
+
+.nav-toggle {
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 44px; /* comfortable touch target */
+    min-height: 44px;
+    padding: 0 0.75rem;
+    font: inherit;
+    font-weight: 500;
+    color: var(--text);
+    background-color: var(--sidebar-glass-overlay);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    cursor: pointer;
+    transition:
+        background-color 150ms ease,
+        transform 100ms ease-out;
+}
+
+.nav-toggle:hover {
+    background-color: var(--surface-hover);
+}
+
+.nav-toggle:active {
+    transform: scale(0.96);
+}
+
+/* Hamburger when closed, cross when open */
+.nav-toggle .icon-close,
+body.nav-open .nav-toggle .icon-open {
+    display: none;
+}
+
+body.nav-open .nav-toggle .icon-close {
+    display: inline;
+}
+
+.nav-toggle-label {
+    display: none;
 }
 
 /* ---------- Contenu principal ---------- */
@@ -520,5 +568,148 @@ td.num {
         background-color: var(--sidebar);
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
+    }
+}
+
+/* =========================================================
+   Responsive sidebar
+   - > 900px      : fixed sidebar on the left (default)
+   - 601–900px    : sidebar hidden, opens over the page with a button
+   - <= 600px     : sidebar docked at the bottom, unfolds upwards and
+                    pushes the page
+   ========================================================= */
+
+/* Tablet: off-canvas sidebar that overlays the page */
+@media (min-width: 601px) and (max-width: 900px) {
+    .content {
+        margin-left: 0;
+        width: 100%;
+        padding-top: 4.5rem; /* room for the toggle button */
+    }
+
+    .nav-toggle {
+        display: inline-flex;
+        position: fixed;
+        top: 0.75rem;
+        left: 0.75rem;
+        z-index: 30; /* above the sidebar so it can close it */
+    }
+
+    nav {
+        padding-top: 4.5rem; /* links start below the toggle button */
+        background-color: var(--sidebar-glass-overlay);
+        transform: translateX(-100%);
+        visibility: hidden; /* closed links are not focusable */
+        transition:
+            transform 280ms var(--ease-out),
+            visibility 0s linear 280ms;
+    }
+
+    body.nav-open nav {
+        transform: none;
+        visibility: visible;
+        box-shadow: 8px 0 32px rgba(0, 0, 0, 0.4);
+        transition:
+            transform 280ms var(--ease-out),
+            visibility 0s;
+    }
+
+    .nav-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 15; /* between the page and the sidebar */
+        background-color: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 280ms ease;
+    }
+
+    body.nav-open .nav-backdrop {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+/* Phone: bottom panel, the page shrinks when it unfolds */
+@media (max-width: 600px) {
+    body {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        overflow: hidden; /* the scroll moves into .content */
+    }
+
+    .content,
+    .content:has(.target-container) {
+        order: 1;
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
+        width: 100%;
+        margin-left: 0;
+        padding: 1rem;
+        overflow-y: auto;
+    }
+
+    .content:has(.target-container) {
+        overflow: hidden; /* the target grid fits the remaining space */
+    }
+
+    nav {
+        order: 2;
+        position: static;
+        width: 100%;
+        height: auto;
+        padding: 0 1rem;
+        overflow: visible;
+        border-right: none;
+        background-color: var(--sidebar);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        /* 0fr -> 1fr animates the height from 0 to the list height */
+        display: grid;
+        grid-template-rows: 0fr;
+        visibility: hidden; /* closed links are not focusable */
+        transition:
+            grid-template-rows 280ms var(--ease-out),
+            visibility 0s linear 280ms;
+    }
+
+    body.nav-open nav {
+        grid-template-rows: 1fr;
+        visibility: visible;
+        transition:
+            grid-template-rows 280ms var(--ease-out),
+            visibility 0s;
+    }
+
+    nav ul {
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* Vertical spacing as margins: padding would not collapse to 0 */
+    nav li:first-child {
+        margin-top: 0.75rem;
+    }
+
+    nav li:last-child {
+        margin-bottom: 0.75rem;
+    }
+
+    .nav-toggle {
+        order: 3;
+        display: flex;
+        width: 100%;
+        min-height: 52px;
+        border: none;
+        border-top: 1px solid var(--border-soft);
+        border-radius: 0;
+        background-color: var(--sidebar);
+    }
+
+    .nav-toggle-label {
+        display: inline;
     }
 }

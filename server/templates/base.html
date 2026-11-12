@@ -16,11 +16,34 @@
     <body>
         {% set pages = [('/', 'Home'), ('/target', 'Target'), ('/statistics',
         'Statistics'), ('/credits', 'Credits')] %}
-        <nav>
+        <button
+            class="nav-toggle"
+            type="button"
+            aria-label="Menu"
+            aria-controls="sidebar"
+            aria-expanded="false"
+        >
+            <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                aria-hidden="true"
+            >
+                <path class="icon-open" d="M4 7h16M4 12h16M4 17h16" />
+                <path class="icon-close" d="M6 6l12 12M18 6L6 18" />
+            </svg>
+            <span class="nav-toggle-label">Menu</span>
+        </button>
+        <div class="nav-backdrop"></div>
+        <nav id="sidebar">
             <ul>
                 {% for url, label in pages %}
                 <li>
-                    <a href="{{ url }}" {% if request.path == url %}aria-current="page"{% endif %}>{{ label }}</a>
+                    <a href="{{ url }}"> {{ label }} </a>
                 </li>
                 {% endfor %}
             </ul>
@@ -28,6 +51,7 @@
 
         <div class="content parent">{% block content %}{% endblock %}</div>
 
-        {% block scripts %}{% endblock %}
+        {% block scripts %} {% endblock %}
+        <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
     </body>
 </html>
