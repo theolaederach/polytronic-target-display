@@ -4,6 +4,7 @@
     <form method="get">
         <label for="shooter_selector">Shooter number</label>
         <select name="shooter" id="shooter_selector"></select>
+        <select name="dates" id="dates_selector"></select>
         <input type="submit" value="Show" />
     </form>
 </div>
@@ -24,6 +25,7 @@
     <thead>
         <tr>
             <th>#</th>
+            <th>Date</th>
             <th>Start time</th>
             <th>End time</th>
             <th>Target type</th>
@@ -41,6 +43,7 @@
             onclick="location.href='/statistics/programm/{{ i.id }}'"
         >
             <td>{{ loop.index }}</td>
+            <td>{{ i.date }}</td>
             <td>{{ i.start_time }}</td>
             <td>{{ i.end_time }}</td>
             <td>{{ i.target_type }}</td>
