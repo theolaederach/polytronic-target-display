@@ -5,6 +5,8 @@
 
 from datetime import datetime, time
 
+from werkzeug.datastructures.structures import TypeConversionDict
+
 from database.connection import execute_request
 from database.writer import get_current
 
@@ -323,20 +325,22 @@ def getAllProgramm(shooter_id, date: str) -> list[dict]:
 
     if not reponse:
         return [{}]
-
-    list_programm: list[dict] = []
-    for row in reponse:
-        list_programm.append(
-            {
-                "id": int(row[0]),
-                "score_base10": int(row[1]),
-                "score_base100": int(row[2]),
-                "target_type": row[3],
-                "date": row[4],
-                "start_time": format_time(row[5]),
-                "end_time": format_time(row[6]),
-            }
-        )
+    try:
+        list_programm: list[dict] = []
+        for row in reponse:
+            list_programm.append(
+                {
+                    "id": row[0],
+                    "score_base10": row[1],
+                    "score_base100": row[2],
+                    "target_type": row[3],
+                    "date": row[4],
+                    "start_time": format_time(row[5]),
+                    "end_time": format_time(row[6]),
+                }
+            )
+    except TypeError:
+        return [{}]
     return list_programm
 
 
@@ -359,7 +363,7 @@ def getProgrammById(id) -> dict:
         }
     """
     request_programm = (
-        "SELECT p.start_time, p.end_time, p.score_base10, p.score_base100, p.target_number, p.shooters_id "
+        "SELECT p.date, p.start_time, p.end_time, p.score_base10, p.score_base100, p.target_number, p.shooters_id "
         "FROM programm p "
         "WHERE p.id = ?;"
     )
@@ -368,9 +372,15 @@ def getProgrammById(id) -> dict:
     if not reponse:
         return {}
 
-    (start_time, end_time, score_base10, score_base100, target_number, shooter_id) = (
-        reponse[0]
-    )
+    (
+        date,
+        start_time,
+        end_time,
+        score_base10,
+        score_base100,
+        target_number,
+        shooter_id,
+    ) = reponse[0]
     shooter_info = getShooterWithId(shooter_id)
 
     if not shooter_info:
@@ -378,6 +388,7 @@ def getProgrammById(id) -> dict:
     shooter_number, shooter_name = shooter_info
 
     return {
+        "date": date,
         "start_time": format_time(start_time),
         "end_time": format_time(end_time),
         "score_base10": score_base10,
