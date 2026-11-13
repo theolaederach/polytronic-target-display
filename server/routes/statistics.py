@@ -6,19 +6,20 @@ routes = Blueprint("statistics", __name__, template_folder="templates")
 
 
 @routes.route("/")
-@routes.route("/<int:shooter_id>")
-def getStatistics(shooter_id=None):
-    if shooter_id:
+@routes.route("/<int:shooter_id>/<string:date>")
+def getStatistics(shooter_id=None, date=None):
+    if shooter_id and date:
         shooter_info = r.getShooterWithId(shooter_id)
         if shooter_info is not None:
             shooter_number, name = shooter_info
         else:
             shooter_number, name = (None, "")
         data_shots = {
+            "shooter_id": shooter_id,
             "shooter_number": shooter_number,
             "shooter_name": name,
-            "shots": r.getAllShots(int(shooter_id)),
-            "programm": r.getAllProgramm(int(shooter_id)),
+            "shots": r.getAllShots(int(shooter_id), date),
+            "programm": r.getAllProgramm(int(shooter_id), date),
         }
     else:
         data_shots = None

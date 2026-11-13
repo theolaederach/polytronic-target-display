@@ -7,6 +7,7 @@
     <h2>Programm infos</h2>
 
     <ul>
+        <li><strong>Date :</strong> {{ data.programm.date }}</li>
         <li><strong>Start time:</strong> {{ data.programm.start_time }}</li>
         <li><strong>End time:</strong> {{ data.programm.end_time }}</li>
         <li>
@@ -78,7 +79,7 @@
     class="container page-link"
     role="button"
     tabindex="0"
-    onclick="location.href='/statistics/{{ data.programm.shooter.id }}'"
+    onclick="location.href='/statistics/{{ data.programm.shooter.id }}/{{ data.programm.date }}'"
 >
     <strong>🔙 Back</strong>
 </div>

@@ -5,6 +5,8 @@
 
 from datetime import datetime, time
 
+from werkzeug.datastructures.structures import TypeConversionDict
+
 from database.connection import execute_request
 from database.writer import get_current
 
@@ -265,7 +267,15 @@ def getAllShooters():
     return reponse
 
 
-def getAllShots(shooter_id: int) -> list[int]:
+def getAllDates():
+    """Return all the programm.date distinct"""
+
+    request = "SELECT DISTINCT p.date  FROM programm p"
+    reponse = execute_request(request, ())
+    return reponse
+
+
+def getAllShots(shooter_id: int, date: str) -> list[int]:
     """Return all the shots from all the programm of a shooter"""
     request = (
         "select shots.score_base100, p.id "
@@ -273,9 +283,9 @@ def getAllShots(shooter_id: int) -> list[int]:
         "inner join programm p on p.shooters_id = s.id "
         "INNER JOIN series se on se.programm_id = p.id "
         "INNER JOIN shots on shots.series_id  = se.id "
-        "where s.id = ?;"
+        "where s.id = ? and p.`date` = ?;"
     )
-    reponse = execute_request(request, (shooter_id,))
+    reponse = execute_request(request, (shooter_id, date))
     if reponse is None:
         return [0]
 
@@ -286,7 +296,7 @@ def getAllShots(shooter_id: int) -> list[int]:
     return shots
 
 
-def getAllProgramm(shooter_id) -> list[dict]:
+def getAllProgramm(shooter_id, date: str) -> list[dict]:
     """
     Get all the programm from a shooter
     returning all the programm into a dict (json)
@@ -306,27 +316,31 @@ def getAllProgramm(shooter_id) -> list[dict]:
         {...}]
     """
     request = (
-        "SELECT p.id, p.score_base10, p.score_base100, p.target_type, p.start_time, p.end_time "
+        "SELECT p.id, p.score_base10, p.score_base100, p.target_type, p.`date`, p.start_time, p.end_time "
         "FROM programm p "
-        "WHERE p.shooters_id = ?;"
+        "WHERE p.shooters_id = ? and p.`date` = ?"
+        "ORDER BY p.`date`, p.end_time DESC"
     )
-    reponse = execute_request(request, (shooter_id,))
+    reponse = execute_request(request, (shooter_id, date))
 
     if not reponse:
         return [{}]
-
-    list_programm: list[dict] = []
-    for row in reponse:
-        list_programm.append(
-            {
-                "id": int(row[0]),
-                "score_base10": int(row[1]),
-                "score_base100": int(row[2]),
-                "target_type": row[3],
-                "start_time": format_time(row[4]),
-                "end_time": format_time(row[5]),
-            }
-        )
+    try:
+        list_programm: list[dict] = []
+        for row in reponse:
+            list_programm.append(
+                {
+                    "id": row[0],
+                    "score_base10": row[1],
+                    "score_base100": row[2],
+                    "target_type": row[3],
+                    "date": row[4],
+                    "start_time": format_time(row[5]),
+                    "end_time": format_time(row[6]),
+                }
+            )
+    except TypeError:
+        return [{}]
     return list_programm
 
 
@@ -349,7 +363,7 @@ def getProgrammById(id) -> dict:
         }
     """
     request_programm = (
-        "SELECT p.start_time, p.end_time, p.score_base10, p.score_base100, p.target_number, p.shooters_id "
+        "SELECT p.date, p.start_time, p.end_time, p.score_base10, p.score_base100, p.target_number, p.shooters_id "
         "FROM programm p "
         "WHERE p.id = ?;"
     )
@@ -358,9 +372,15 @@ def getProgrammById(id) -> dict:
     if not reponse:
         return {}
 
-    (start_time, end_time, score_base10, score_base100, target_number, shooter_id) = (
-        reponse[0]
-    )
+    (
+        date,
+        start_time,
+        end_time,
+        score_base10,
+        score_base100,
+        target_number,
+        shooter_id,
+    ) = reponse[0]
     shooter_info = getShooterWithId(shooter_id)
 
     if not shooter_info:
@@ -368,6 +388,7 @@ def getProgrammById(id) -> dict:
     shooter_number, shooter_name = shooter_info
 
     return {
+        "date": date,
         "start_time": format_time(start_time),
         "end_time": format_time(end_time),
         "score_base10": score_base10,
