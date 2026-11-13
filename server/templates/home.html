@@ -5,6 +5,7 @@
 
 <div class="home-grid">
     <!-- Weather stats -->
+    {% if weather %}
     <section class="container span-1 weather-icone">
         <div>
             <img
@@ -48,6 +49,7 @@
             >{{ weather.data.visibility }} m
         </span>
     </section>
+    {% endif %}
 
     <!-- Second row -->
     <!-- Charts -->
