@@ -30,7 +30,7 @@ Le listener et la base doivent survivre aux paquets étranges, aux doublons et a
 - [x] `listener.py` : supprimer le code mort (fallback latin-1 jamais atteint avec `errors="replace"`, `except KeyboardInterrupt` inutile dans un thread)
 - [x] Faire de la table `current` la seule source de vérité de l'état des cibles (le listener et Flask modifient aujourd'hui les mêmes `current_*` sans verrou)
 - [x] Décider d'une stratégie pour les GUID : `UNIQUE` global → clé composite avec la date si le système de tir remet ses compteurs à zéro ; logger les doublons au lieu d'un simple `print`
-- [ ] Stocker les heures avec la date (`DATETIME` au lieu de `TIME`) avant d'ajouter des statistiques sur plusieurs jours
+- [x] Stocker les heures avec la date (`DATETIME` au lieu de `TIME`) avant d'ajouter des statistiques sur plusieurs jours
 - [x] Utiliser `DATABASE_NAME` dans `writer.py` au lieu du schéma `polytronic-target-display` écrit en dur
 
 ## Priorité 3 – Sécurité et déploiement
