@@ -205,11 +205,15 @@ Press `Ctrl+C` in the terminal that ran `app.py` – both the Flask server and t
 
 ## To do
 
-- [ ] Make the home page of the website
-- [ ] Create an auto-install script
+- [ ] (on progress) Make the home page of the website
+- [ ] Make the project deployable on docker
 - [ ] print auto-genereted stand sheet
-- [ ] Add a `date` column to `programm` table
+- [x] Add a `date` column to `programm` table
 - [ ] Add a zone for sponsors and results table
+- [ ] Add a setup page for the competitions and everthing
+- [ ] Add categories (age, gender) and leaderboard.
+- [ ] Add more shooter's information like birthdate or shooting society.
+- [ ] Add groups for competitions.
 
 <details><summary>Alreader done</summary>
 
