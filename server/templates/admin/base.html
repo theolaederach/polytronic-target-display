@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='style.css') }}"
+        />
+        <link
+            rel="shortcut icon"
+            href="{{ url_for('static', filename='favicon.ico') }}"
+        />
+        <title>{% block title %}Target Display{% endblock %}</title>
+    </head>
+    <body>
+        {% set pages = [('/admin/', 'Home'), ('/admin/competition',
+        'Competition'), ('/admin/groups', 'Groups'), ('/admin/logout',
+        'Logout')] %}
+        <button
+            class="nav-toggle"
+            type="button"
+            aria-label="Menu"
+            aria-controls="sidebar"
+            aria-expanded="false"
+        >
+            <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                aria-hidden="true"
+            >
+                <path class="icon-open" d="M4 7h16M4 12h16M4 17h16" />
+                <path class="icon-close" d="M6 6l12 12M18 6L6 18" />
+            </svg>
+            <span class="nav-toggle-label">Menu</span>
+        </button>
+        <div class="nav-backdrop"></div>
+        <nav id="sidebar">
+            <ul>
+                {% for url, label in pages %}
+                <li>
+                    <a href="{{ url }}"> {{ label }} </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </nav>
+
+        <div class="content parent">{% block content %}{% endblock %}</div>
+
+        {% block scripts %} {% endblock %}
+        <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+    </body>
+</html>
