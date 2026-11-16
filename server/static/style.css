@@ -232,7 +232,8 @@ label {
 }
 
 select,
-input[type="submit"] {
+input[type="submit"],
+input[type="button"] {
     font: inherit;
     padding: 0.55rem 0.95rem;
     border-radius: 8px;
@@ -255,6 +256,18 @@ input[type="submit"] {
     background-color: var(--accent);
     border-color: var(--accent);
     color: var(--accent-contrast);
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background-color 150ms ease,
+        transform 100ms ease-out;
+}
+
+input[type="button"].back {
+    margin-left: 0.5rem;
+    background-color: #ff342f;
+    border-color: #cd0403;
+    color: #6c0303;
     font-weight: 600;
     cursor: pointer;
     transition:
@@ -531,6 +544,28 @@ td.num {
     }
 }
 
+/* Page de login */
+.no-sidebar {
+    margin-left: 0% !important;
+    width: 100% !important;
+}
+.login {
+    display: flex;
+    flex-direction: column;
+    max-width: fit-content !important;
+    justify-self: center;
+    padding: 2rem 3rem;
+}
+.login input {
+    margin-bottom: 20px;
+}
+
+.center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
 /* =========================================================
    Accessibilité
    ========================================================= */
