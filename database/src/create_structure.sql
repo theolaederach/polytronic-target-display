@@ -138,6 +138,17 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`current` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
+DROP TABLE IF EXISTS `polytronic-target-display`.`users` ;
+
+CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`users` (
+  `id` INT NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `password_hash` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`)
+  )
+
+ENGINE = InnoDB;
+
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
