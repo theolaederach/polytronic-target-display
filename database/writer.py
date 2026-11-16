@@ -38,6 +38,51 @@ def getShooterByNumber(shooter_number: int) -> tuple[int, str]:
         return (0, "???")
 
 
+def create_user(username: str, password_hash: str, role: str = "admin") -> int | None:
+    """
+    Insert a new user in the users table.
+
+    Args :
+        username (str): unique login name.
+        password_hash (str): hash of the password (never the clear password).
+        role (str): role of the user, "admin" by default.
+
+    Return :
+        The id of the new user (int), or None if the insert failed
+        (for example if the username already exists).
+    """
+    conn: mariadb.Connection | None = None
+
+    try:
+        conn = _get_connection()
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                (username, password_hash, role),
+            )
+            new_id: int | None = cursor.lastrowid
+        # the pool uses autocommit=False : the insert must be committed
+        conn.commit()
+        return new_id
+
+    except mariadb.IntegrityError:
+        logger.error("User '%s' already exists", username)
+        if conn:
+            conn.rollback()
+        return None
+
+    except mariadb.Error:
+        logger.exception("DB writing error (create_user)")
+        if conn:
+            conn.rollback()
+        return None
+
+    finally:
+        # give the connection back to the pool
+        if conn:
+            conn.close()
+
+
 class InitTarget:
     """
     State manager and writer for a specific target.

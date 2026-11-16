@@ -3,12 +3,78 @@
 # Last update : 27.10.2026
 # Description : Module for read the database with function like listScore()
 
+import logging
 from datetime import datetime, time
+from typing import NamedTuple
 
+import mariadb
 from werkzeug.datastructures.structures import TypeConversionDict
 
 from database.connection import execute_request
 from database.writer import get_current
+
+logger = logging.getLogger(__name__)
+
+
+class User(NamedTuple):
+    """A row of the users table."""
+
+    id: int
+    username: str
+    password_hash: str
+    role: str
+
+
+def _fetch_user(request: str, params: tuple) -> User | None:
+    """
+    Run a SELECT on the users table and build a User from the first row.
+
+    Args :
+        request (str): SQL statement selecting id, username, password_hash, role.
+        params (tuple): values that replace the "?" placeholders.
+
+    Return :
+        The user (User), or None if no row matches.
+    """
+    try:
+        rows = execute_request(request, params)
+    except mariadb.Error:
+        logger.exception("DB reading error on the users table")
+        raise
+
+    if not rows:
+        return None
+
+    # init the user from the first row
+    return User(*rows[0])
+
+
+def get_user_by_username(username: str) -> User | None:
+    """
+    Get a user from his username.
+
+    Args :
+        username (str): the login name.
+
+    Return :
+        The user (User), or None if the username does not exist.
+    """
+    request = "SELECT id, username, password_hash, role FROM users WHERE username = ?"
+    return _fetch_user(request, (username,))
+
+
+def get_user_by_id(user_id: int) -> User | None:
+    """
+    Get a user from his id.
+
+    Args :
+        user_id (int): the id of the user.
+
+    Return :
+        The user (User), or None if the id does not exist.
+    """
+    request = "SELECT id, username, password_hash, role FROM users WHERE id = ?"
+    return _fetch_user(request, (user_id,))
 
 
 def format_time(value) -> str:

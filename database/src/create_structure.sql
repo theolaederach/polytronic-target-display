@@ -138,15 +138,22 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`current` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `polytronic-target-display`.`users`
+-- No DROP TABLE here : re-running this script must not delete the accounts.
+-- password_hash : werkzeug hash (scrypt), about 160 characters.
+-- -----------------------------------------------------
 DROP TABLE IF EXISTS `polytronic-target-display`.`users` ;
 
 CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`users` (
-  `id` INT NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `username` VARCHAR(100) NOT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
-  PRIMARY KEY (`id`)
-  )
-
+  `role` VARCHAR(20) NOT NULL DEFAULT 'admin',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `username_UNIQUE` (`username` ASC))
 ENGINE = InnoDB;
 
 
