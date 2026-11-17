@@ -83,6 +83,79 @@ def create_user(username: str, password_hash: str, role: str = "admin") -> int |
             conn.close()
 
 
+def create_group(
+    name: str, society_id: int, shooter_numbers: list[int]
+) -> int | None:
+    """
+    Insert a new group with its shooters, in one transaction.
+
+    A shooter number that is not in the shooters table yet is created without
+    name (the listener fills the name when the shooter appears on a target).
+    The shooters are stored in the first free slots (shooter_1, shooter_2...).
+
+    Args :
+        name (str): name of the group.
+        society_id (int): id of the society of the group.
+        shooter_numbers (list[int]): shooter numbers (1 to 4, no duplicate).
+
+    Return :
+        The id of the new group (int), or None if the insert failed.
+    """
+    if not 1 <= len(shooter_numbers) <= 4:
+        logger.error("A group needs 1 to 4 shooters, got %d", len(shooter_numbers))
+        return None
+
+    conn: mariadb.Connection | None = None
+
+    try:
+        conn = _get_connection()
+        with conn.cursor() as cursor:
+            shooter_ids: list[int | None] = []
+
+            for number in shooter_numbers:
+                cursor.execute(
+                    "SELECT id FROM shooters WHERE shooter_number = ?", (number,)
+                )
+                row = cursor.fetchone()
+
+                if row is None:
+                    # unknown shooter : create it in the society of the group
+                    cursor.execute(
+                        "INSERT INTO shooters (shooter_number, society_id) "
+                        "VALUES (?, ?)",
+                        (number, society_id),
+                    )
+                    shooter_ids.append(cursor.lastrowid)
+                else:
+                    shooter_ids.append(row[0])
+
+            # free slots stay NULL
+            shooter_ids += [None] * (4 - len(shooter_ids))
+
+            cursor.execute(
+                "INSERT INTO `groups` "
+                "(name, society_id, shooter_1, shooter_2, shooter_3, shooter_4) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (name, society_id, *shooter_ids),
+            )
+            group_id: int | None = cursor.lastrowid
+
+        # shooters and group are saved together, or not at all
+        conn.commit()
+        return group_id
+
+    except mariadb.Error:
+        logger.exception("DB writing error (create_group)")
+        if conn:
+            conn.rollback()
+        return None
+
+    finally:
+        # give the connection back to the pool
+        if conn:
+            conn.close()
+
+
 class InitTarget:
     """
     State manager and writer for a specific target.
