@@ -54,6 +54,11 @@ def main_page():
     return render_template("admin/base.html")
 
 
+@routes.route("/groups")
+def groups_page():
+    return render_template("admin/groups.html")
+
+
 @routes.route("/login", methods=["GET", "POST"])
 @limiter.limit("5 per minute", methods=["POST"])
 def login() -> Response | str | tuple[str, int]:
