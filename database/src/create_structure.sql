@@ -30,9 +30,10 @@ USE `polytronic-target-display` ;
 DROP TABLE IF EXISTS `polytronic-target-display`.`shooters`;
 
 CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`shooters` (
-	id INT auto_increment NOT NULL,
-	shooter_number INT NOT NULL,
-	name varchar(100) NULL,
+	`id INT auto_increment` NOT NULL,
+	`shooter_number` INT NOT NULL,
+	`name` varchar(100) NULL,
+	`birthdate` DATE NULL,
 	`society_id` INT NULL,
 	CONSTRAINT shooters_pk PRIMARY KEY (id),
 	CONSTRAINT shooters_unique UNIQUE KEY (shooter_number),
