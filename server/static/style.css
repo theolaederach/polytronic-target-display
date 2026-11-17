@@ -285,6 +285,208 @@ input[type="submit"]:active {
     transform: scale(0.97);
 }
 
+input[type="submit"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ---------- Champs de saisie : texte, nombre, mot de passe, etc. ---------- */
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="email"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="time"],
+textarea {
+    font: inherit;
+    padding: 0.55rem 0.8rem;
+    background-color: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition:
+        border-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+input[type="number"] {
+    font-variant-numeric: tabular-nums;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+input:hover:not(:disabled),
+textarea:hover:not(:disabled),
+select:hover:not(:disabled) {
+    border-color: var(--text-muted);
+}
+
+/* Focus : bordure + halo, en plus du contour clavier */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+}
+
+/* Valeur invalide, seulement après une interaction de l'utilisateur */
+input:user-invalid,
+select:user-invalid,
+textarea:user-invalid {
+    border-color: #f87171;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    width: 1.05rem;
+    height: 1.05rem;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+    accent-color: var(--accent);
+}
+
+/* ---------- Messages (succès / erreur) ---------- */
+.alert,
+.error {
+    padding: 0.75rem 1rem;
+    margin: 0 0 1rem;
+    border: 1px solid;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.alert ul {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+.alert-error,
+.error {
+    background-color: rgba(248, 113, 113, 0.12);
+    border-color: rgba(248, 113, 113, 0.45);
+    color: #fecaca;
+}
+
+.alert-success {
+    background-color: rgba(74, 222, 128, 0.12);
+    border-color: rgba(74, 222, 128, 0.4);
+    color: #bbf7d0;
+}
+
+/* ---------- Formulaire de création (page Groups) ---------- */
+.create_group fieldset {
+    min-width: 0; /* un fieldset ne doit pas déborder de sa carte */
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.create_group .form-body {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.form-row,
+.shooters-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.form-field label {
+    margin: 0;
+    font-weight: 500;
+}
+
+.form-field input,
+.form-field select {
+    width: 100%;
+}
+
+.shooters legend {
+    padding: 0;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.hint {
+    margin-left: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-soft);
+}
+
+.form-actions input[type="submit"] {
+    margin-left: 0;
+    padding: 0.65rem 1.5rem;
+}
+
+/* ---------- Liste des groupes ---------- */
+.badge {
+    margin-left: 0.4rem;
+    padding: 0.1rem 0.6rem;
+    border-radius: 999px;
+    background-color: rgba(56, 189, 248, 0.14);
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+/* Le tableau est déjà dans une carte : pas de seconde ombre */
+.container .table-wrapper table {
+    box-shadow: none;
+}
+
+.group-name {
+    font-weight: 600;
+}
+
+.shooter-number {
+    display: block; /* le numéro sous le nom, pour toutes les lignes */
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.muted {
+    color: var(--text-muted);
+}
+
+td.empty {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
 /* ---------- Tableaux ---------- */
 table {
     width: 100%;
