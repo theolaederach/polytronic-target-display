@@ -3,15 +3,38 @@
 # Description : Admin pages : login, logout and protection of the admin routes.
 
 import logging
+from typing import NamedTuple
 
-from flask import Blueprint, g, redirect, render_template, request, session, url_for
+from flask import (
+    Blueprint,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from werkzeug.datastructures import MultiDict
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.wrappers import Response
 
-from database.reader import get_user_by_id, get_user_by_username
+from database.reader import (
+    get_user_by_id,
+    get_user_by_username,
+    group_exists,
+    list_groups,
+    list_societies,
+)
+from database.writer import create_group
 from server.extensions import limiter
 
 logger = logging.getLogger(__name__)
+
+# Limits of the group form (the shooter number is an INT in the database)
+MAX_GROUP_NAME_LENGTH: int = 100
+MAX_SHOOTERS_PER_GROUP: int = 4
+MAX_SHOOTER_NUMBER: int = 2_147_483_647
 
 routes = Blueprint("admin", __name__, template_folder="templates")
 
@@ -54,9 +77,119 @@ def main_page():
     return render_template("admin/base.html")
 
 
-@routes.route("/groups")
-def groups_page():
-    return render_template("admin/groups.html")
+class GroupForm(NamedTuple):
+    """The checked content of the group form."""
+
+    name: str
+    society_id: int | None
+    shooter_numbers: list[int]
+    errors: list[str]
+
+
+def parse_group_form(form: MultiDict, society_ids: set[int]) -> GroupForm:
+    """
+    Read and check the fields of the group form.
+
+    Args :
+        form (MultiDict): the submitted form (request.form).
+        society_ids (set[int]): ids of the societies that exist in the database.
+
+    Return :
+        The checked values (GroupForm). If ``errors`` is not empty, the form
+        must not be saved. The shooter numbers are packed without the empty
+        fields, in the order of the form.
+    """
+    errors: list[str] = []
+
+    # --- name
+    name: str = form.get("name", "").strip()
+    if not name:
+        errors.append("The group name is required.")
+    elif len(name) > MAX_GROUP_NAME_LENGTH:
+        errors.append(f"The group name is too long (max {MAX_GROUP_NAME_LENGTH}).")
+
+    # --- society : the id must be one of the societies of the database
+    society_id: int | None = None
+    raw_society: str = form.get("society", "").strip()
+    if raw_society.isascii() and raw_society.isdigit() and int(raw_society) in society_ids:
+        society_id = int(raw_society)
+    else:
+        errors.append("Please select a society from the list.")
+
+    # --- shooters : empty fields are allowed, the others must be valid numbers
+    shooter_numbers: list[int] = []
+    shooter_errors: list[str] = []
+    for position in range(1, MAX_SHOOTERS_PER_GROUP + 1):
+        raw_number: str = form.get(f"shooter_{position}", "").strip()
+        if not raw_number:
+            continue
+
+        if not (raw_number.isascii() and raw_number.isdigit()):
+            shooter_errors.append(
+                f"Shooter {position}: the number must be a whole number."
+            )
+        elif not 1 <= int(raw_number) <= MAX_SHOOTER_NUMBER:
+            shooter_errors.append(f"Shooter {position}: the number is out of range.")
+        else:
+            shooter_numbers.append(int(raw_number))
+
+    if not shooter_numbers and not shooter_errors:
+        shooter_errors.append("Add at least one shooter.")
+
+    if len(set(shooter_numbers)) != len(shooter_numbers):
+        shooter_errors.append("A shooter can only be in a group once.")
+
+    errors += shooter_errors
+
+    return GroupForm(name, society_id, shooter_numbers, errors)
+
+
+@routes.route("/groups", methods=["GET", "POST"])
+def groups_page() -> Response | str | tuple[str, int]:
+    """
+    Show the groups page (GET) or create a group from the form (POST).
+
+    Args :
+        None
+
+    Return :
+        The page with the form and the list of groups. After a valid POST,
+        a redirect to the page (so a refresh does not send the form again).
+        An invalid form returns the page with the errors (status 400).
+    """
+    societies = list_societies()
+    errors: list[str] = []
+    status: int = 200
+
+    if request.method == "POST":
+        form = parse_group_form(request.form, {society.id for society in societies})
+        errors = form.errors
+
+        # the name must be free in this society (checked only on valid fields)
+        if not errors and group_exists(form.name, form.society_id):
+            errors.append("This society already has a group with this name.")
+
+        if errors:
+            status = 400
+        elif create_group(form.name, form.society_id, form.shooter_numbers) is None:
+            errors.append("The group could not be saved, see the server logs.")
+            status = 500
+        else:
+            logger.info("Group created (name=%r, user=%s)", form.name, g.user.username)
+            flash(f"Group “{form.name}” created.", "success")
+            # 303 : the browser reloads the page with a GET
+            return redirect(url_for(".groups_page"), code=303)
+
+    page = render_template(
+        "admin/groups.html",
+        societies=societies,
+        groups=list_groups(),
+        errors=errors,
+        # on error, the form is filled again with what the user typed
+        values=request.form if request.method == "POST" else {},
+        max_shooters=MAX_SHOOTERS_PER_GROUP,
+    )
+    return page, status
 
 
 @routes.route("/login", methods=["GET", "POST"])

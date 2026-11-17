@@ -1,39 +1,146 @@
-{% extends "admin/base.html" %} {% block content %}
+{% extends "admin/base.html" %}
+{% block title %}Admin - Groups{% endblock %}
+{% block content %}
 <h1>Groups</h1>
+
+{# message sent by the route after a group was created #}
+{% for category, message in get_flashed_messages(with_categories=true) %}
+<p class="alert alert-{{ category }}" role="status">{{ message }}</p>
+{% endfor %}
+
 <div class="container">
     <h2>Create a new group</h2>
-    <form class="create_group">
-        <label for="group_name">Group name</label>
-        <input type="text" maxlength="100" placeholder="Name of the group" >
 
-        <label for="group_society">Society</label>
-        <select name="society" id="group_society">
-            <option value="ici">Ici</option>
-        </select>
-        <div>
-            {% for i in range(4) %}
-            <label for="shooter_{{ i+1 }}">shooter {{ i+1 }}</label>
-            <input type="number" placeholder="Shooter number" >
-                {% endfor %}
-        </div>
-        <input type="submit" value="Create">
+    {% if errors %}
+    <div class="alert alert-error" role="alert">
+        <ul>
+            {% for error in errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %} {% if not societies %}
+    <p class="alert alert-error" role="alert">
+        There is no society yet: add one in the <code>societies</code> table to
+        create a group.
+    </p>
+    {% endif %}
+
+    <form
+        class="create_group"
+        method="post"
+        action="{{ url_for('.groups_page') }}"
+    >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        {# a disabled fieldset disables all the fields it contains #}
+        <fieldset class="form-body" {% if not societies %}disabled{% endif %}>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="group_name">Group name</label>
+                    <input
+                        type="text"
+                        id="group_name"
+                        name="name"
+                        maxlength="100"
+                        placeholder="Name of the group"
+                        autocomplete="off"
+                        value="{{ values.get('name', '') }}"
+                        required
+                    />
+                </div>
+
+                <div class="form-field">
+                    <label for="group_society">Society</label>
+                    <select name="society" id="group_society" required>
+                        <option value="" disabled {% if not values.get('society') %}selected{% endif %}>
+                            Select a society
+                        </option>
+                        {% for society in societies %}
+                        <option
+                            value="{{ society.id }}"
+                            {% if values.get('society') == society.id|string %}selected{% endif %}
+                        >
+                            {{ society.label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <fieldset class="shooters">
+                <legend>
+                    Shooters
+                    <span class="hint"
+                        >1 to {{ max_shooters }}, leave unused fields empty</span
+                    >
+                </legend>
+                <div class="shooters-grid">
+                    {% for i in range(1, max_shooters + 1) %}
+                    <div class="form-field">
+                        <label for="shooter_{{ i }}">Shooter {{ i }}</label>
+                        <input
+                            type="number"
+                            id="shooter_{{ i }}"
+                            name="shooter_{{ i }}"
+                            min="1"
+                            step="1"
+                            inputmode="numeric"
+                            placeholder="Shooter number"
+                            value="{{ values.get('shooter_' ~ i, '') }}"
+                            {% if i == 1 %}required{% endif %}
+                        />
+                    </div>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            <div class="form-actions">
+                <input type="submit" value="Create the group" />
+            </div>
+        </fieldset>
     </form>
 </div>
 
 <div class="container">
-    <h2>List of groups</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Society</th>
-                <th>Shooter 1</th>
-                <th>Shooter 2</th>
-                <th>Shooter 3</th>
-                <th>Shooter 4</th>
-            </tr>
-        </thead>
-    </table>
+    <h2>List of groups <span class="badge">{{ groups|length }}</span></h2>
+
+    <div class="table-wrapper">
+        <table class="groups-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Society</th>
+                    <th>Shooter 1</th>
+                    <th>Shooter 2</th>
+                    <th>Shooter 3</th>
+                    <th>Shooter 4</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for group in groups %}
+                <tr>
+                    <td class="num">{{ group.id }}</td>
+                    <td class="group-name">{{ group.name }}</td>
+                    <td>{{ group.society or "—" }}</td>
+                    {% for shooter in group.shooters %}
+                    <td>
+                        {% if shooter %} {{ shooter.name or "Unnamed" }}
+                        <span class="shooter-number">#{{ shooter.number }}</span>
+                        {% else %}
+                        <span class="muted">—</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% else %}
+                <tr>
+                    <td class="empty" colspan="7">No group yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
