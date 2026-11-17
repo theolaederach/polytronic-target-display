@@ -77,6 +77,133 @@ def get_user_by_id(user_id: int) -> User | None:
     return _fetch_user(request, (user_id,))
 
 
+def _society_label(society_id: int, name: str | None, location: str | None) -> str:
+    """
+    Build the text shown for a society, for example "Tir Club (Lausanne)".
+
+    Args :
+        society_id (int): id of the society, used if it has no name and no location.
+        name (str | None): name of the society.
+        location (str | None): location of the society.
+
+    Return :
+        The label of the society (str).
+    """
+    parts = [name or "", f"({location})" if location else ""]
+    return " ".join(part for part in parts if part) or f"Society {society_id}"
+
+
+class Society(NamedTuple):
+    """A row of the societies table, with the text to show in the pages."""
+
+    id: int
+    label: str
+
+
+class GroupShooter(NamedTuple):
+    """A shooter of a group. The name is None until the listener receives it."""
+
+    number: int
+    name: str | None
+
+
+class Group(NamedTuple):
+    """A group with its society and its shooters (4 slots, None if empty)."""
+
+    id: int
+    name: str
+    society: str
+    shooters: list[GroupShooter | None]
+
+
+def list_societies() -> list[Society]:
+    """
+    Get all the societies, sorted by name.
+
+    Args :
+        None
+
+    Return :
+        The list of societies (list[Society]), empty if there is none.
+    """
+    request = "SELECT id, name, location FROM societies ORDER BY name, location"
+    try:
+        rows = execute_request(request, ())
+    except mariadb.Error:
+        logger.exception("DB reading error on the societies table")
+        raise
+
+    return [Society(row[0], _society_label(row[0], row[1], row[2])) for row in rows or []]
+
+
+def list_groups() -> list[Group]:
+    """
+    Get all the groups with their society and their shooters.
+
+    One query joins the groups with the societies and with the shooters
+    (LEFT JOIN : a group without society or with free slots is kept).
+
+    Args :
+        None
+
+    Return :
+        The list of groups (list[Group]), sorted by id, empty if there is none.
+    """
+    request = (
+        "SELECT g.id, g.name, so.id, so.name, so.location, "
+        "s1.shooter_number, s1.name, s2.shooter_number, s2.name, "
+        "s3.shooter_number, s3.name, s4.shooter_number, s4.name "
+        "FROM `groups` g "
+        "LEFT JOIN societies so ON so.id = g.society_id "
+        "LEFT JOIN shooters s1 ON s1.id = g.shooter_1 "
+        "LEFT JOIN shooters s2 ON s2.id = g.shooter_2 "
+        "LEFT JOIN shooters s3 ON s3.id = g.shooter_3 "
+        "LEFT JOIN shooters s4 ON s4.id = g.shooter_4 "
+        "ORDER BY g.id"
+    )
+    try:
+        rows = execute_request(request, ())
+    except mariadb.Error:
+        logger.exception("DB reading error on the groups table")
+        raise
+
+    groups: list[Group] = []
+    for row in rows or []:
+        society = "" if row[2] is None else _society_label(row[2], row[3], row[4])
+
+        # the shooters come as (number, name) pairs from the 5th column
+        shooters: list[GroupShooter | None] = []
+        for slot in range(4):
+            number = row[5 + slot * 2]
+            name = row[6 + slot * 2]
+            shooters.append(None if number is None else GroupShooter(number, name))
+
+        groups.append(Group(row[0], row[1] or "", society, shooters))
+
+    return groups
+
+
+def group_exists(name: str, society_id: int) -> bool:
+    """
+    Check if a group with this name already exists in this society.
+
+    Args :
+        name (str): name of the group.
+        society_id (int): id of the society.
+
+    Return :
+        True if the group exists (bool), else False.
+    """
+    request = "SELECT 1 FROM `groups` WHERE name = ? AND society_id = ? LIMIT 1"
+    try:
+        rows = execute_request(request, (name, society_id))
+    except mariadb.Error:
+        logger.exception("DB reading error on the groups table")
+        raise
+
+    return bool(rows)
+
+
 def format_time(value) -> str:
     if value is None:
         return ""
