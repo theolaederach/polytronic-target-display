@@ -83,14 +83,50 @@ def create_user(username: str, password_hash: str, role: str = "admin") -> int |
             conn.close()
 
 
+def _get_shooter_ids(
+    cursor: "mariadb.Cursor", society_id: int, shooter_numbers: list[int]
+) -> list[int | None]:
+    """
+    Get the id of each shooter number, and create the unknown shooters.
+
+    A shooter number that is not in the shooters table yet is created without
+    name (the listener fills the name when the shooter appears on a target).
+
+    Args :
+        cursor (mariadb.Cursor): cursor of the transaction in progress.
+        society_id (int): id of the society, given to the shooters it creates.
+        shooter_numbers (list[int]): shooter numbers (1 to 4).
+
+    Return :
+        The 4 shooter ids (list), in the order of the numbers.
+        Free slots are None.
+    """
+    shooter_ids: list[int | None] = []
+
+    for number in shooter_numbers:
+        cursor.execute("SELECT id FROM shooters WHERE shooter_number = ?", (number,))
+        row = cursor.fetchone()
+
+        if row is None:
+            # unknown shooter : create it in the society of the group
+            cursor.execute(
+                "INSERT INTO shooters (shooter_number, society_id) VALUES (?, ?)",
+                (number, society_id),
+            )
+            shooter_ids.append(cursor.lastrowid)
+        else:
+            shooter_ids.append(row[0])
+
+    # free slots stay NULL
+    return shooter_ids + [None] * (4 - len(shooter_ids))
+
+
 def create_group(
     name: str, society_id: int, shooter_numbers: list[int]
 ) -> int | None:
     """
     Insert a new group with its shooters, in one transaction.
 
-    A shooter number that is not in the shooters table yet is created without
-    name (the listener fills the name when the shooter appears on a target).
     The shooters are stored in the first free slots (shooter_1, shooter_2...).
 
     Args :
@@ -110,27 +146,7 @@ def create_group(
     try:
         conn = _get_connection()
         with conn.cursor() as cursor:
-            shooter_ids: list[int | None] = []
-
-            for number in shooter_numbers:
-                cursor.execute(
-                    "SELECT id FROM shooters WHERE shooter_number = ?", (number,)
-                )
-                row = cursor.fetchone()
-
-                if row is None:
-                    # unknown shooter : create it in the society of the group
-                    cursor.execute(
-                        "INSERT INTO shooters (shooter_number, society_id) "
-                        "VALUES (?, ?)",
-                        (number, society_id),
-                    )
-                    shooter_ids.append(cursor.lastrowid)
-                else:
-                    shooter_ids.append(row[0])
-
-            # free slots stay NULL
-            shooter_ids += [None] * (4 - len(shooter_ids))
+            shooter_ids = _get_shooter_ids(cursor, society_id, shooter_numbers)
 
             cursor.execute(
                 "INSERT INTO `groups` "
@@ -149,6 +165,93 @@ def create_group(
         if conn:
             conn.rollback()
         return None
+
+    finally:
+        # give the connection back to the pool
+        if conn:
+            conn.close()
+
+
+def update_group(
+    group_id: int, name: str, society_id: int, shooter_numbers: list[int]
+) -> bool:
+    """
+    Change the name, the society and the shooters of a group, in one transaction.
+
+    The shooters are stored in the first free slots (shooter_1, shooter_2...).
+    The shooters removed from the group are kept in the shooters table.
+
+    Args :
+        group_id (int): id of the group to change.
+        name (str): new name of the group.
+        society_id (int): id of the new society of the group.
+        shooter_numbers (list[int]): shooter numbers (1 to 4, no duplicate).
+
+    Return :
+        True if the group was saved (bool), False if the update failed.
+    """
+    if not 1 <= len(shooter_numbers) <= 4:
+        logger.error("A group needs 1 to 4 shooters, got %d", len(shooter_numbers))
+        return False
+
+    conn: mariadb.Connection | None = None
+
+    try:
+        conn = _get_connection()
+        with conn.cursor() as cursor:
+            shooter_ids = _get_shooter_ids(cursor, society_id, shooter_numbers)
+
+            cursor.execute(
+                "UPDATE `groups` SET name = ?, society_id = ?, "
+                "shooter_1 = ?, shooter_2 = ?, shooter_3 = ?, shooter_4 = ? "
+                "WHERE id = ?",
+                (name, society_id, *shooter_ids, group_id),
+            )
+
+        # shooters and group are saved together, or not at all
+        conn.commit()
+        return True
+
+    except mariadb.Error:
+        logger.exception("DB writing error (update_group)")
+        if conn:
+            conn.rollback()
+        return False
+
+    finally:
+        # give the connection back to the pool
+        if conn:
+            conn.close()
+
+
+def delete_group(group_id: int) -> bool:
+    """
+    Delete a group. The shooters of the group are kept.
+
+    The database refuses to delete a group that is used by a programm
+    (foreign key) : check count_group_programms() before.
+
+    Args :
+        group_id (int): id of the group to delete.
+
+    Return :
+        True if the group was deleted (bool), False if the delete failed.
+    """
+    conn: mariadb.Connection | None = None
+
+    try:
+        conn = _get_connection()
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM `groups` WHERE id = ?", (group_id,))
+
+        conn.commit()
+        return True
+
+    except mariadb.Error:
+        logger.exception("DB writing error (delete_group)")
+        if conn:
+            conn.rollback()
+        return False
 
     finally:
         # give the connection back to the pool
