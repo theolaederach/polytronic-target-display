@@ -18,7 +18,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-MIN_PASSWORD_LENGTH: int = 12
+MIN_PASSWORD_LENGTH: int = 4
 
 
 def ask_password() -> str | None:
