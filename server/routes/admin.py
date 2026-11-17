@@ -20,13 +20,16 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.wrappers import Response
 
 from database.reader import (
+    Society,
+    count_group_programms,
+    get_group,
     get_user_by_id,
     get_user_by_username,
     group_exists,
     list_groups,
     list_societies,
 )
-from database.writer import create_group
+from database.writer import create_group, delete_group, update_group
 from server.extensions import limiter
 
 logger = logging.getLogger(__name__)
@@ -180,16 +183,133 @@ def groups_page() -> Response | str | tuple[str, int]:
             # 303 : the browser reloads the page with a GET
             return redirect(url_for(".groups_page"), code=303)
 
+    # on error, the form is filled again with what the user typed
+    values = request.form if request.method == "POST" else None
+    return _render_groups_page(societies, errors, values, status=status)
+
+
+def _render_groups_page(
+    societies: list[Society],
+    errors: list[str] | None = None,
+    values: MultiDict | None = None,
+    edit_errors: list[str] | None = None,
+    edit_values: MultiDict | None = None,
+    edit_group_id: int | None = None,
+    status: int = 200,
+) -> tuple[str, int]:
+    """
+    Render the groups page with the form, the list and the edit popup.
+
+    Args :
+        societies (list[Society]): the societies of the select fields.
+        errors (list[str] | None): errors of the creation form.
+        values (MultiDict | None): what the user typed in the creation form.
+        edit_errors (list[str] | None): errors of the edit popup.
+        edit_values (MultiDict | None): what the user typed in the edit popup.
+        edit_group_id (int | None): group of the edit popup. If set, the popup
+            is opened when the page loads (to show the errors).
+        status (int): HTTP status of the response.
+
+    Return :
+        The page and its status (tuple).
+    """
     page = render_template(
         "admin/groups.html",
         societies=societies,
         groups=list_groups(),
-        errors=errors,
-        # on error, the form is filled again with what the user typed
-        values=request.form if request.method == "POST" else {},
+        errors=errors or [],
+        values=values or {},
+        edit_errors=edit_errors or [],
+        edit_values=edit_values or {},
+        edit_group_id=edit_group_id,
         max_shooters=MAX_SHOOTERS_PER_GROUP,
     )
     return page, status
+
+
+@routes.route("/groups/<int:group_id>/edit", methods=["POST"])
+def edit_group(group_id: int) -> Response | tuple[str, int]:
+    """
+    Change the name, the society and the shooters of a group (edit popup).
+
+    Args :
+        group_id (int): id of the group, from the URL.
+
+    Return :
+        A redirect to the groups page if the group is saved. An invalid form
+        returns the page with the popup open and the errors (status 400).
+    """
+    if get_group(group_id) is None:
+        flash("This group does not exist anymore.", "error")
+        return redirect(url_for(".groups_page"), code=303)
+
+    societies = list_societies()
+    form = parse_group_form(request.form, {society.id for society in societies})
+    errors = form.errors
+
+    # the name must be free in this society, the group itself is ignored
+    if not errors and group_exists(form.name, form.society_id, exclude_id=group_id):
+        errors.append("This society already has a group with this name.")
+
+    status: int = 400
+    if not errors:
+        if update_group(group_id, form.name, form.society_id, form.shooter_numbers):
+            logger.info(
+                "Group updated (id=%d, name=%r, user=%s)",
+                group_id,
+                form.name,
+                g.user.username,
+            )
+            flash(f"Group “{form.name}” updated.", "success")
+            return redirect(url_for(".groups_page"), code=303)
+
+        errors.append("The group could not be saved, see the server logs.")
+        status = 500
+
+    return _render_groups_page(
+        societies,
+        edit_errors=errors,
+        edit_values=request.form,
+        edit_group_id=group_id,
+        status=status,
+    )
+
+
+@routes.route("/groups/<int:group_id>/delete", methods=["POST"])
+def remove_group(group_id: int) -> Response:
+    """
+    Delete a group. A group used by programms is kept, to not lose their results.
+
+    Args :
+        group_id (int): id of the group, from the URL.
+
+    Return :
+        A redirect to the groups page, with a message.
+    """
+    group = get_group(group_id)
+    if group is None:
+        flash("This group does not exist anymore.", "error")
+        return redirect(url_for(".groups_page"), code=303)
+
+    programm_count = count_group_programms(group_id)
+    if programm_count:
+        flash(
+            f"Group “{group.name}” cannot be deleted: "
+            f"it is used by {programm_count} programm(s).",
+            "error",
+        )
+    elif delete_group(group_id):
+        logger.info(
+            "Group deleted (id=%d, name=%r, user=%s)",
+            group_id,
+            group.name,
+            g.user.username,
+        )
+        flash(f"Group “{group.name}” deleted.", "success")
+    else:
+        flash("The group could not be deleted, see the server logs.", "error")
+
+    return redirect(url_for(".groups_page"), code=303)
 
 
 @routes.route("/login", methods=["GET", "POST"])

@@ -487,6 +487,180 @@ td.empty {
     color: var(--text-muted);
 }
 
+.table-hint {
+    margin: -0.25rem 0 0.9rem;
+    font-size: 0.85rem;
+}
+
+/* Ligne cliquable : ouvre la popup de modification */
+.group-row {
+    cursor: pointer;
+}
+
+/* Le nom est un vrai bouton (accessible au clavier) qui ressemble à du texte */
+.row-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.group-row:hover .row-link,
+.row-link:focus-visible {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* ---------- Boutons ---------- */
+.btn {
+    padding: 0.55rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease,
+        color 150ms ease,
+        transform 100ms ease-out;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-primary {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-contrast);
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-strong);
+    border-color: var(--accent-strong);
+}
+
+.btn-secondary:hover {
+    background-color: var(--surface-hover);
+}
+
+.btn-danger {
+    border-color: rgba(248, 113, 113, 0.5);
+    color: #fca5a5;
+}
+
+.btn-danger:hover {
+    background-color: rgba(248, 113, 113, 0.14);
+}
+
+/* 1er clic sur Supprimer : en attente de confirmation */
+.btn-danger.armed {
+    background-color: #dc2626;
+    border-color: #dc2626;
+    color: #fff;
+}
+
+/* ---------- Popup (<dialog>) ---------- */
+dialog.modal {
+    width: min(42rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    padding: 0; /* un clic sur le <dialog> lui-même = clic sur le fond */
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background-color: var(--surface);
+    color: var(--text);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+dialog.modal[open] {
+    animation: modal-in 180ms var(--ease-out);
+}
+
+dialog.modal::backdrop {
+    background-color: rgba(2, 6, 23, 0.7);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+@keyframes modal-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+}
+
+/* La page derrière la popup ne défile pas */
+body:has(dialog.modal[open]) {
+    overflow: hidden;
+}
+
+.modal-content {
+    padding: 1.25rem 1.5rem;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.modal-header h2 {
+    margin: 0;
+}
+
+.modal-close {
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+        background-color 150ms ease,
+        color 150ms ease;
+}
+
+.modal-close:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--text);
+}
+
+.modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-soft);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    dialog.modal[open] {
+        animation: none;
+    }
+}
+
 /* ---------- Tableaux ---------- */
 table {
     width: 100%;
