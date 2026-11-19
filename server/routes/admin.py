@@ -80,6 +80,11 @@ def main_page():
     return render_template("admin/base.html")
 
 
+@routes.route("/societies")
+def societies_page():
+    return render_template("admin/societies.html")
+
+
 class GroupForm(NamedTuple):
     """The checked content of the group form."""
 
