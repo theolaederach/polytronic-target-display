@@ -114,7 +114,11 @@ def parse_group_form(form: MultiDict, society_ids: set[int]) -> GroupForm:
     # --- society : the id must be one of the societies of the database
     society_id: int | None = None
     raw_society: str = form.get("society", "").strip()
-    if raw_society.isascii() and raw_society.isdigit() and int(raw_society) in society_ids:
+    if (
+        raw_society.isascii()
+        and raw_society.isdigit()
+        and int(raw_society) in society_ids
+    ):
         society_id = int(raw_society)
     else:
         errors.append("Please select a society from the list.")
@@ -169,10 +173,14 @@ def groups_page() -> Response | str | tuple[str, int]:
         errors = form.errors
 
         # the name must be free in this society (checked only on valid fields)
-        if not errors and group_exists(form.name, form.society_id):
+        if not form.society_id:
+            errors.append("No society id.")
+            status = 500
+
+        elif not errors and group_exists(form.name, form.society_id):
             errors.append("This society already has a group with this name.")
 
-        if errors:
+        if errors or not form.society_id:
             status = 400
         elif create_group(form.name, form.society_id, form.shooter_numbers) is None:
             errors.append("The group could not be saved, see the server logs.")
@@ -248,11 +256,15 @@ def edit_group(group_id: int) -> Response | tuple[str, int]:
     errors = form.errors
 
     # the name must be free in this society, the group itself is ignored
-    if not errors and group_exists(form.name, form.society_id, exclude_id=group_id):
+    if not form.society_id:
+        errors.append("No society id.")
+        status = 500
+
+    elif not errors and group_exists(form.name, form.society_id, exclude_id=group_id):
         errors.append("This society already has a group with this name.")
 
     status: int = 400
-    if not errors:
+    if not errors and form.society_id:
         if update_group(group_id, form.name, form.society_id, form.shooter_numbers):
             logger.info(
                 "Group updated (id=%d, name=%r, user=%s)",
