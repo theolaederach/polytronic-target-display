@@ -23,13 +23,25 @@ from database.reader import (
     Society,
     count_group_programms,
     get_group,
+    get_society,
     get_user_by_id,
     get_user_by_username,
     group_exists,
     list_groups,
+    list_shooters,
     list_societies,
+    list_societies_detail,
+    society_exists,
 )
-from database.writer import create_group, delete_group, update_group
+from database.writer import (
+    create_group,
+    create_society,
+    delete_group,
+    delete_society,
+    set_shooters_society,
+    update_group,
+    update_society,
+)
 from server.extensions import limiter
 
 logger = logging.getLogger(__name__)
@@ -38,6 +50,9 @@ logger = logging.getLogger(__name__)
 MAX_GROUP_NAME_LENGTH: int = 100
 MAX_SHOOTERS_PER_GROUP: int = 4
 MAX_SHOOTER_NUMBER: int = 2_147_483_647
+
+# Limit of the society form (name and location are varchar(100))
+MAX_SOCIETY_FIELD_LENGTH: int = 100
 
 routes = Blueprint("admin", __name__, template_folder="templates")
 
@@ -78,11 +93,6 @@ def require_login() -> Response | None:
 @routes.route("/")
 def main_page():
     return render_template("admin/base.html")
-
-
-@routes.route("/societies")
-def societies_page():
-    return render_template("admin/societies.html")
 
 
 class GroupForm(NamedTuple):
@@ -327,6 +337,267 @@ def remove_group(group_id: int) -> Response:
         flash("The group could not be deleted, see the server logs.", "error")
 
     return redirect(url_for(".groups_page"), code=303)
+
+
+class SocietyForm(NamedTuple):
+    """The checked content of the society form."""
+
+    name: str
+    location: str
+    errors: list[str]
+
+
+def parse_society_form(form: MultiDict) -> SocietyForm:
+    """
+    Read and check the fields of the society form.
+
+    Args :
+        form (MultiDict): the submitted form (request.form).
+
+    Return :
+        The checked values (SocietyForm). If ``errors`` is not empty, the form
+        must not be saved.
+    """
+    errors: list[str] = []
+
+    name: str = form.get("name", "").strip()
+    if not name:
+        errors.append("The society name is required.")
+    elif len(name) > MAX_SOCIETY_FIELD_LENGTH:
+        errors.append(
+            f"The society name is too long (max {MAX_SOCIETY_FIELD_LENGTH})."
+        )
+
+    location: str = form.get("location", "").strip()
+    if not location:
+        errors.append("The location is required.")
+    elif len(location) > MAX_SOCIETY_FIELD_LENGTH:
+        errors.append(f"The location is too long (max {MAX_SOCIETY_FIELD_LENGTH}).")
+
+    return SocietyForm(name, location, errors)
+
+
+def _render_societies_page(
+    errors: list[str] | None = None,
+    values: MultiDict | None = None,
+    edit_errors: list[str] | None = None,
+    edit_values: MultiDict | None = None,
+    edit_society_id: int | None = None,
+    shooter_errors: list[str] | None = None,
+    status: int = 200,
+) -> tuple[str, int]:
+    """
+    Render the societies page : creation form, list, edit popup and shooters.
+
+    Args :
+        errors (list[str] | None): errors of the creation form.
+        values (MultiDict | None): what the user typed in the creation form.
+        edit_errors (list[str] | None): errors of the edit popup.
+        edit_values (MultiDict | None): what the user typed in the edit popup.
+        edit_society_id (int | None): society of the edit popup. If set, the
+            popup is opened when the page loads (to show the errors).
+        shooter_errors (list[str] | None): errors of the shooters table.
+        status (int): HTTP status of the response.
+
+    Return :
+        The page and its status (tuple).
+    """
+    page = render_template(
+        "admin/societies.html",
+        societies=list_societies_detail(),
+        shooters=list_shooters(),
+        errors=errors or [],
+        values=values or {},
+        edit_errors=edit_errors or [],
+        edit_values=edit_values or {},
+        edit_society_id=edit_society_id,
+        shooter_errors=shooter_errors or [],
+    )
+    return page, status
+
+
+@routes.route("/societies", methods=["GET", "POST"])
+def societies_page() -> Response | tuple[str, int]:
+    """
+    Show the societies page (GET) or create a society from the form (POST).
+
+    Args :
+        None
+
+    Return :
+        The page with the form, the list and the shooters. After a valid POST,
+        a redirect to the page (so a refresh does not send the form again).
+        An invalid form returns the page with the errors (status 400).
+    """
+    errors: list[str] = []
+    status: int = 200
+
+    if request.method == "POST":
+        form = parse_society_form(request.form)
+        errors = form.errors
+
+        # the location must be free (checked only on valid fields)
+        if not errors and society_exists(form.location):
+            errors.append("A society already exists at this location.")
+
+        if errors:
+            status = 400
+        elif create_society(form.name, form.location) is None:
+            errors.append("The society could not be saved, see the server logs.")
+            status = 500
+        else:
+            logger.info(
+                "Society created (name=%r, location=%r, user=%s)",
+                form.name,
+                form.location,
+                g.user.username,
+            )
+            flash(f"Society “{form.name} ({form.location})” created.", "success")
+            # 303 : the browser reloads the page with a GET
+            return redirect(url_for(".societies_page"), code=303)
+
+    # on error, the form is filled again with what the user typed
+    values = request.form if request.method == "POST" else None
+    return _render_societies_page(errors, values, status=status)
+
+
+@routes.route("/societies/<int:society_id>/edit", methods=["POST"])
+def edit_society(society_id: int) -> Response | tuple[str, int]:
+    """
+    Change the name and the location of a society (edit popup).
+
+    Args :
+        society_id (int): id of the society, from the URL.
+
+    Return :
+        A redirect to the societies page if the society is saved. An invalid
+        form returns the page with the popup open and the errors (status 400).
+    """
+    if get_society(society_id) is None:
+        flash("This society does not exist anymore.", "error")
+        return redirect(url_for(".societies_page"), code=303)
+
+    form = parse_society_form(request.form)
+    errors = form.errors
+    status: int = 400
+
+    # the location must be free, the society itself is ignored
+    if not errors and society_exists(form.location, exclude_id=society_id):
+        errors.append("A society already exists at this location.")
+
+    if not errors:
+        if update_society(society_id, form.name, form.location):
+            logger.info(
+                "Society updated (id=%d, name=%r, user=%s)",
+                society_id,
+                form.name,
+                g.user.username,
+            )
+            flash(f"Society “{form.name} ({form.location})” updated.", "success")
+            return redirect(url_for(".societies_page"), code=303)
+
+        errors.append("The society could not be saved, see the server logs.")
+        status = 500
+
+    return _render_societies_page(
+        edit_errors=errors,
+        edit_values=request.form,
+        edit_society_id=society_id,
+        status=status,
+    )
+
+
+@routes.route("/societies/<int:society_id>/delete", methods=["POST"])
+def remove_society(society_id: int) -> Response:
+    """
+    Delete a society. A society used by groups is kept, its shooters are detached.
+
+    Args :
+        society_id (int): id of the society, from the URL.
+
+    Return :
+        A redirect to the societies page, with a message.
+    """
+    society = get_society(society_id)
+    if society is None:
+        flash("This society does not exist anymore.", "error")
+        return redirect(url_for(".societies_page"), code=303)
+
+    if society.group_count:
+        flash(
+            f"Society “{society.label}” cannot be deleted: "
+            f"it is used by {society.group_count} group(s).",
+            "error",
+        )
+    elif delete_society(society_id):
+        logger.info(
+            "Society deleted (id=%d, name=%r, user=%s)",
+            society_id,
+            society.name,
+            g.user.username,
+        )
+        flash(f"Society “{society.label}” deleted.", "success")
+    else:
+        flash("The society could not be deleted, see the server logs.", "error")
+
+    return redirect(url_for(".societies_page"), code=303)
+
+
+@routes.route("/societies/shooters", methods=["POST"])
+def assign_shooters() -> Response | tuple[str, int]:
+    """
+    Save the society of the shooters (one select per shooter in the table).
+
+    Only the shooters whose society changed are written.
+
+    Args :
+        None
+
+    Return :
+        A redirect to the societies page if the shooters are saved. An invalid
+        value returns the page with the errors (status 400).
+    """
+    society_ids: set[int] = {society.id for society in list_societies_detail()}
+
+    changes: dict[int, int | None] = {}
+    errors: list[str] = []
+
+    for shooter in list_shooters():
+        raw_society: str | None = request.form.get(f"shooter_{shooter.id}")
+        if raw_society is None:
+            # the field is not in the form : the shooter stays as it is
+            continue
+
+        raw_society = raw_society.strip()
+        new_society_id: int | None = None
+        if raw_society:
+            # the id must be one of the societies of the database
+            if not (
+                raw_society.isascii()
+                and raw_society.isdigit()
+                and int(raw_society) in society_ids
+            ):
+                errors.append(f"Shooter #{shooter.number}: unknown society.")
+                continue
+            new_society_id = int(raw_society)
+
+        if new_society_id != shooter.society_id:
+            changes[shooter.id] = new_society_id
+
+    if errors:
+        return _render_societies_page(shooter_errors=errors, status=400)
+
+    if not changes:
+        flash("No change to save.", "success")
+    elif set_shooters_society(changes):
+        logger.info(
+            "Shooters assigned (count=%d, user=%s)", len(changes), g.user.username
+        )
+        flash(f"{len(changes)} shooter(s) updated.", "success")
+    else:
+        flash("The shooters could not be saved, see the server logs.", "error")
+
+    return redirect(url_for(".societies_page"), code=303)
 
 
 @routes.route("/login", methods=["GET", "POST"])

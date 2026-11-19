@@ -259,6 +259,159 @@ def delete_group(group_id: int) -> bool:
             conn.close()
 
 
+def create_society(name: str, location: str) -> int | None:
+    """
+    Insert a new society.
+
+    Args :
+        name (str): name of the society.
+        location (str): location of the society (must be unique).
+
+    Return :
+        The id of the new society (int), or None if the insert failed.
+    """
+    conn: mariadb.Connection | None = None
+
+    try:
+        conn = _get_connection()
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO societies (name, location) VALUES (?, ?)",
+                (name, location),
+            )
+            society_id: int | None = cursor.lastrowid
+
+        conn.commit()
+        return society_id
+
+    except mariadb.Error:
+        logger.exception("DB writing error (create_society)")
+        if conn:
+            conn.rollback()
+        return None
+
+    finally:
+        # give the connection back to the pool
+        if conn:
+            conn.close()
+
+
+def update_society(society_id: int, name: str, location: str) -> bool:
+    """
+    Change the name and the location of a society.
+
+    Args :
+        society_id (int): id of the society to change.
+        name (str): new name of the society.
+        location (str): new location of the society (must be unique).
+
+    Return :
+        True if the society was saved (bool), False if the update failed.
+    """
+    conn: mariadb.Connection | None = None
+
+    try:
+        conn = _get_connection()
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "UPDATE societies SET name = ?, location = ? WHERE id = ?",
+                (name, location, society_id),
+            )
+
+        conn.commit()
+        return True
+
+    except mariadb.Error:
+        logger.exception("DB writing error (update_society)")
+        if conn:
+            conn.rollback()
+        return False
+
+    finally:
+        # give the connection back to the pool
+        if conn:
+            conn.close()
+
+
+def delete_society(society_id: int) -> bool:
+    """
+    Delete a society. Its shooters are kept, without society.
+
+    The database refuses to delete a society that is used by a group
+    (foreign key) : check the group count before.
+
+    Args :
+        society_id (int): id of the society to delete.
+
+    Return :
+        True if the society was deleted (bool), False if the delete failed.
+    """
+    conn: mariadb.Connection | None = None
+
+    try:
+        conn = _get_connection()
+        with conn.cursor() as cursor:
+            # detach the shooters first, the foreign key would refuse the delete
+            cursor.execute(
+                "UPDATE shooters SET society_id = NULL WHERE society_id = ?",
+                (society_id,),
+            )
+            cursor.execute("DELETE FROM societies WHERE id = ?", (society_id,))
+
+        # detach and delete are saved together, or not at all
+        conn.commit()
+        return True
+
+    except mariadb.Error:
+        logger.exception("DB writing error (delete_society)")
+        if conn:
+            conn.rollback()
+        return False
+
+    finally:
+        # give the connection back to the pool
+        if conn:
+            conn.close()
+
+
+def set_shooters_society(assignments: dict[int, int | None]) -> bool:
+    """
+    Change the society of several shooters, in one transaction.
+
+    Args :
+        assignments (dict[int, int | None]): society id (None for no society)
+            by shooter id (the id of the table, not the shooter number).
+
+    Return :
+        True if all the shooters were saved (bool), False if the update failed.
+    """
+    conn: mariadb.Connection | None = None
+
+    try:
+        conn = _get_connection()
+        with conn.cursor() as cursor:
+            for shooter_id, society_id in assignments.items():
+                cursor.execute(
+                    "UPDATE shooters SET society_id = ? WHERE id = ?",
+                    (society_id, shooter_id),
+                )
+
+        # all the shooters are saved together, or none
+        conn.commit()
+        return True
+
+    except mariadb.Error:
+        logger.exception("DB writing error (set_shooters_society)")
+        if conn:
+            conn.rollback()
+        return False
+
+    finally:
+        # give the connection back to the pool
+        if conn:
+            conn.close()
+
+
 class InitTarget:
     """
     State manager and writer for a specific target.
