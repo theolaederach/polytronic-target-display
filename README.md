@@ -197,6 +197,23 @@ options:
                         Listen port TCP (défaut: 4000)
 ```
 
+## Admin page
+
+1. set the `SECRET_KEY` into the `.env`
+generate a secret key with this command :
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+and past the output un the `.env`
+The secret key is used to generate the hadh of the password. Any password is stored in clear into the database.
+
+2. setup the *admin account*
+```bash
+create_admin.py admin # or any other name
+```
+You have to setup a password with min. `12 character`.
+
+
 ### Stopping
 
 Press `Ctrl+C` in the terminal that ran `app.py` – both the Flask server and the TCP listener will terminate.
