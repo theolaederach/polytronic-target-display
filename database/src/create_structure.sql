@@ -30,7 +30,7 @@ USE `polytronic-target-display` ;
 DROP TABLE IF EXISTS `polytronic-target-display`.`shooters`;
 
 CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`shooters` (
-	`id INT auto_increment` NOT NULL,
+	`id` INT auto_increment NOT NULL,
 	`shooter_number` INT NOT NULL,
 	`name` varchar(100) NULL,
 	`birthdate` DATE NULL,
