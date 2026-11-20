@@ -3,12 +3,401 @@
 # Last update : 27.10.2026
 # Description : Module for read the database with function like listScore()
 
+import logging
 from datetime import datetime, time
+from typing import NamedTuple
 
+import mariadb
 from werkzeug.datastructures.structures import TypeConversionDict
 
 from database.connection import execute_request
 from database.writer import get_current
+
+logger = logging.getLogger(__name__)
+
+
+class User(NamedTuple):
+    """A row of the users table."""
+
+    id: int
+    username: str
+    password_hash: str
+    role: str
+
+
+def _fetch_user(request: str, params: tuple) -> User | None:
+    """
+    Run a SELECT on the users table and build a User from the first row.
+
+    Args :
+        request (str): SQL statement selecting id, username, password_hash, role.
+        params (tuple): values that replace the "?" placeholders.
+
+    Return :
+        The user (User), or None if no row matches.
+    """
+    try:
+        rows = execute_request(request, params)
+    except mariadb.Error:
+        logger.exception("DB reading error on the users table")
+        raise
+
+    if not rows:
+        return None
+
+    # init the user from the first row
+    return User(*rows[0])
+
+
+def get_user_by_username(username: str) -> User | None:
+    """
+    Get a user from his username.
+
+    Args :
+        username (str): the login name.
+
+    Return :
+        The user (User), or None if the username does not exist.
+    """
+    request = "SELECT id, username, password_hash, role FROM users WHERE username = ?"
+    return _fetch_user(request, (username,))
+
+
+def get_user_by_id(user_id: int) -> User | None:
+    """
+    Get a user from his id.
+
+    Args :
+        user_id (int): the id of the user.
+
+    Return :
+        The user (User), or None if the id does not exist.
+    """
+    request = "SELECT id, username, password_hash, role FROM users WHERE id = ?"
+    return _fetch_user(request, (user_id,))
+
+
+def _society_label(society_id: int, name: str | None, location: str | None) -> str:
+    """
+    Build the text shown for a society, for example "Tir Club (Lausanne)".
+
+    Args :
+        society_id (int): id of the society, used if it has no name and no location.
+        name (str | None): name of the society.
+        location (str | None): location of the society.
+
+    Return :
+        The label of the society (str).
+    """
+    parts = [name or "", f"({location})" if location else ""]
+    return " ".join(part for part in parts if part) or f"Society {society_id}"
+
+
+class Society(NamedTuple):
+    """A row of the societies table, with the text to show in the pages."""
+
+    id: int
+    label: str
+
+
+class GroupShooter(NamedTuple):
+    """A shooter of a group. The name is None until the listener receives it."""
+
+    number: int
+    name: str | None
+
+
+class Group(NamedTuple):
+    """A group with its society and its shooters (4 slots, None if empty)."""
+
+    id: int
+    name: str
+    society_id: int | None
+    society: str
+    shooters: list[GroupShooter | None]
+
+    @property
+    def shooter_numbers(self) -> list[int | None]:
+        """The 4 shooter numbers, None for a free slot (used by the edit popup)."""
+        return [shooter.number if shooter else None for shooter in self.shooters]
+
+
+def list_societies() -> list[Society]:
+    """
+    Get all the societies, sorted by name.
+
+    Args :
+        None
+
+    Return :
+        The list of societies (list[Society]), empty if there is none.
+    """
+    request = "SELECT id, name, location FROM societies ORDER BY name, location"
+    try:
+        rows = execute_request(request, ())
+    except mariadb.Error:
+        logger.exception("DB reading error on the societies table")
+        raise
+
+    return [Society(row[0], _society_label(row[0], row[1], row[2])) for row in rows or []]
+
+
+# One query joins the groups with the societies and with the shooters
+# (LEFT JOIN : a group without society or with free slots is kept)
+_GROUPS_QUERY: str = (
+    "SELECT g.id, g.name, so.id, so.name, so.location, "
+    "s1.shooter_number, s1.name, s2.shooter_number, s2.name, "
+    "s3.shooter_number, s3.name, s4.shooter_number, s4.name "
+    "FROM `groups` g "
+    "LEFT JOIN societies so ON so.id = g.society_id "
+    "LEFT JOIN shooters s1 ON s1.id = g.shooter_1 "
+    "LEFT JOIN shooters s2 ON s2.id = g.shooter_2 "
+    "LEFT JOIN shooters s3 ON s3.id = g.shooter_3 "
+    "LEFT JOIN shooters s4 ON s4.id = g.shooter_4 "
+)
+
+
+def _build_group(row: list) -> Group:
+    """
+    Build a Group from a row of _GROUPS_QUERY.
+
+    Args :
+        row (list): the row (group, society, then 4 pairs shooter number / name).
+
+    Return :
+        The group (Group).
+    """
+    society = "" if row[2] is None else _society_label(row[2], row[3], row[4])
+
+    # the shooters come as (number, name) pairs from the 6th column
+    shooters: list[GroupShooter | None] = []
+    for slot in range(4):
+        number = row[5 + slot * 2]
+        name = row[6 + slot * 2]
+        shooters.append(None if number is None else GroupShooter(number, name))
+
+    return Group(row[0], row[1] or "", row[2], society, shooters)
+
+
+def _fetch_groups(where: str, params: tuple) -> list[Group]:
+    """
+    Run _GROUPS_QUERY with a filter and build the groups.
+
+    Args :
+        where (str): WHERE clause (with its "?" placeholders), or "" for no filter.
+        params (tuple): values that replace the "?" placeholders.
+
+    Return :
+        The list of groups (list[Group]), sorted by id.
+    """
+    try:
+        rows = execute_request(f"{_GROUPS_QUERY}{where} ORDER BY g.id", params)
+    except mariadb.Error:
+        logger.exception("DB reading error on the groups table")
+        raise
+
+    return [_build_group(row) for row in rows or []]
+
+
+def list_groups() -> list[Group]:
+    """
+    Get all the groups with their society and their shooters.
+
+    Args :
+        None
+
+    Return :
+        The list of groups (list[Group]), sorted by id, empty if there is none.
+    """
+    return _fetch_groups("", ())
+
+
+def get_group(group_id: int) -> Group | None:
+    """
+    Get one group with its society and its shooters.
+
+    Args :
+        group_id (int): id of the group.
+
+    Return :
+        The group (Group), or None if the id does not exist.
+    """
+    groups = _fetch_groups("WHERE g.id = ?", (group_id,))
+    return groups[0] if groups else None
+
+
+def group_exists(name: str, society_id: int, exclude_id: int = 0) -> bool:
+    """
+    Check if a group with this name already exists in this society.
+
+    Args :
+        name (str): name of the group.
+        society_id (int): id of the society.
+        exclude_id (int): id of a group to ignore (the group being edited).
+
+    Return :
+        True if the group exists (bool), else False.
+    """
+    request = (
+        "SELECT 1 FROM `groups` WHERE name = ? AND society_id = ? AND id <> ? LIMIT 1"
+    )
+    try:
+        rows = execute_request(request, (name, society_id, exclude_id))
+    except mariadb.Error:
+        logger.exception("DB reading error on the groups table")
+        raise
+
+    return bool(rows)
+
+
+def count_group_programms(group_id: int) -> int:
+    """
+    Count the programms (shooting results) linked to a group.
+
+    A group used by programms must not be deleted.
+
+    Args :
+        group_id (int): id of the group.
+
+    Return :
+        The number of programms of the group (int).
+    """
+    request = "SELECT COUNT(*) FROM programm WHERE group_id = ?"
+    try:
+        rows = execute_request(request, (group_id,))
+    except mariadb.Error:
+        logger.exception("DB reading error on the programm table")
+        raise
+
+    return int(rows[0][0]) if rows else 0
+
+
+class SocietyDetail(NamedTuple):
+    """A society with the number of shooters and groups that use it."""
+
+    id: int
+    name: str
+    location: str
+    shooter_count: int
+    group_count: int
+
+    @property
+    def label(self) -> str:
+        """The text shown for the society, for example "Tir Club (Lausanne)"."""
+        return _society_label(self.id, self.name, self.location)
+
+
+class ShooterRow(NamedTuple):
+    """A row of the shooters table. The name is None until the listener receives it."""
+
+    id: int
+    number: int
+    name: str | None
+    society_id: int | None
+
+
+# The counts are sub-queries : a society without shooter or group is kept
+_SOCIETIES_QUERY: str = (
+    "SELECT so.id, so.name, so.location, "
+    "(SELECT COUNT(*) FROM shooters sh WHERE sh.society_id = so.id), "
+    "(SELECT COUNT(*) FROM `groups` g WHERE g.society_id = so.id) "
+    "FROM societies so "
+)
+
+
+def _fetch_societies(where: str, params: tuple) -> list[SocietyDetail]:
+    """
+    Run _SOCIETIES_QUERY with a filter and build the societies.
+
+    Args :
+        where (str): WHERE clause (with its "?" placeholders), or "" for no filter.
+        params (tuple): values that replace the "?" placeholders.
+
+    Return :
+        The list of societies (list[SocietyDetail]), sorted by name.
+    """
+    request = f"{_SOCIETIES_QUERY}{where} ORDER BY so.name, so.location"
+    try:
+        rows = execute_request(request, params)
+    except mariadb.Error:
+        logger.exception("DB reading error on the societies table")
+        raise
+
+    return [
+        SocietyDetail(row[0], row[1] or "", row[2] or "", int(row[3]), int(row[4]))
+        for row in rows or []
+    ]
+
+
+def list_societies_detail() -> list[SocietyDetail]:
+    """
+    Get all the societies with their number of shooters and groups.
+
+    Args :
+        None
+
+    Return :
+        The list of societies (list[SocietyDetail]), empty if there is none.
+    """
+    return _fetch_societies("", ())
+
+
+def get_society(society_id: int) -> SocietyDetail | None:
+    """
+    Get one society with its number of shooters and groups.
+
+    Args :
+        society_id (int): id of the society.
+
+    Return :
+        The society (SocietyDetail), or None if the id does not exist.
+    """
+    societies = _fetch_societies("WHERE so.id = ?", (society_id,))
+    return societies[0] if societies else None
+
+
+def society_exists(location: str, exclude_id: int = 0) -> bool:
+    """
+    Check if a society already exists at this location (the column is UNIQUE).
+
+    Args :
+        location (str): location of the society.
+        exclude_id (int): id of a society to ignore (the society being edited).
+
+    Return :
+        True if the location is already used (bool), else False.
+    """
+    request = "SELECT 1 FROM societies WHERE location = ? AND id <> ? LIMIT 1"
+    try:
+        rows = execute_request(request, (location, exclude_id))
+    except mariadb.Error:
+        logger.exception("DB reading error on the societies table")
+        raise
+
+    return bool(rows)
+
+
+def list_shooters() -> list[ShooterRow]:
+    """
+    Get all the shooters with their society id, sorted by shooter number.
+
+    Args :
+        None
+
+    Return :
+        The list of shooters (list[ShooterRow]), empty if there is none.
+    """
+    request = (
+        "SELECT id, shooter_number, name, society_id FROM shooters "
+        "ORDER BY shooter_number"
+    )
+    try:
+        rows = execute_request(request, ())
+    except mariadb.Error:
+        logger.exception("DB reading error on the shooters table")
+        raise
+
+    return [ShooterRow(*row) for row in rows or []]
 
 
 def format_time(value) -> str:

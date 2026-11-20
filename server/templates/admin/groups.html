@@ -1,0 +1,253 @@
+{% extends "admin/base.html" %}
+{% block title %}Admin - Groups{% endblock %}
+{% block content %}
+
+{#
+    Fields shared by the creation form and the edit popup.
+    "prefix" keeps the ids unique, as both are on the same page.
+#}
+{% macro group_fields(prefix, societies, values, max_shooters) %}
+<div class="form-row">
+    <div class="form-field">
+        <label for="{{ prefix }}_name">Group name</label>
+        <input
+            type="text"
+            id="{{ prefix }}_name"
+            name="name"
+            maxlength="100"
+            placeholder="Name of the group"
+            autocomplete="off"
+            value="{{ values.get('name', '') }}"
+            required
+        />
+    </div>
+
+    <div class="form-field">
+        <label for="{{ prefix }}_society">Society</label>
+        <select name="society" id="{{ prefix }}_society" required>
+            <option value="" disabled {% if not values.get('society') %}selected{% endif %}>
+                Select a society
+            </option>
+            {% for society in societies %}
+            <option
+                value="{{ society.id }}"
+                {% if values.get('society') == society.id|string %}selected{% endif %}
+            >
+                {{ society.label }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<fieldset class="shooters">
+    <legend>
+        Shooters
+        <span class="hint">1 to {{ max_shooters }}, leave unused fields empty</span>
+    </legend>
+    <div class="shooters-grid">
+        {% for i in range(1, max_shooters + 1) %}
+        <div class="form-field">
+            <label for="{{ prefix }}_shooter_{{ i }}">Shooter {{ i }}</label>
+            <input
+                type="number"
+                id="{{ prefix }}_shooter_{{ i }}"
+                name="shooter_{{ i }}"
+                min="1"
+                step="1"
+                inputmode="numeric"
+                placeholder="Shooter number"
+                value="{{ values.get('shooter_' ~ i, '') }}"
+                {% if i == 1 %}required{% endif %}
+            />
+        </div>
+        {% endfor %}
+    </div>
+</fieldset>
+{% endmacro %}
+
+<h1>Groups</h1>
+
+{# message sent by the route after a group was created, edited or deleted #}
+{% for category, message in get_flashed_messages(with_categories=true) %}
+<p class="alert alert-{{ category }}" role="status">{{ message }}</p>
+{% endfor %}
+
+<div class="container">
+    <h2>Create a new group</h2>
+
+    {% if errors %}
+    <div class="alert alert-error" role="alert">
+        <ul>
+            {% for error in errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% if not societies %}
+    <p class="alert alert-error" role="alert">
+        There is no society yet: add one in the <code>societies</code> table to
+        create a group.
+    </p>
+    {% endif %}
+
+    <form
+        class="create_group"
+        method="post"
+        action="{{ url_for('.groups_page') }}"
+    >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        {# a disabled fieldset disables all the fields it contains #}
+        <fieldset class="form-body" {% if not societies %}disabled{% endif %}>
+            {{ group_fields('create', societies, values, max_shooters) }}
+
+            <div class="form-actions">
+                <input type="submit" value="Create the group" />
+            </div>
+        </fieldset>
+    </form>
+</div>
+
+<div class="container">
+    <h2>List of groups <span class="badge">{{ groups|length }}</span></h2>
+    {% if groups %}
+    <p class="muted table-hint">Click a group to edit or delete it.</p>
+    {% endif %}
+
+    <div class="table-wrapper">
+        <table class="groups-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Society</th>
+                    <th>Shooter 1</th>
+                    <th>Shooter 2</th>
+                    <th>Shooter 3</th>
+                    <th>Shooter 4</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# the data-* attributes are read by groups.js to fill the popup #}
+                {% for group in groups %}
+                <tr
+                    class="group-row"
+                    data-group-id="{{ group.id }}"
+                    data-name="{{ group.name }}"
+                    data-society-id="{{ group.society_id or '' }}"
+                    data-shooters='{{ group.shooter_numbers | tojson }}'
+                    data-edit-url="{{ url_for('.edit_group', group_id=group.id) }}"
+                    data-delete-url="{{ url_for('.remove_group', group_id=group.id) }}"
+                >
+                    <td class="num">{{ group.id }}</td>
+                    <td class="group-name">
+                        {# a real button : reachable and usable with the keyboard #}
+                        <button type="button" class="row-link">
+                            {{ group.name or "(no name)" }}
+                        </button>
+                    </td>
+                    <td>{{ group.society or "—" }}</td>
+                    {% for shooter in group.shooters %}
+                    <td>
+                        {% if shooter %} {{ shooter.name or "Unnamed" }}
+                        <span class="shooter-number">#{{ shooter.number }}</span>
+                        {% else %}
+                        <span class="muted">—</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% else %}
+                <tr>
+                    <td class="empty" colspan="7">No group yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# Edit popup, opened by groups.js (or opened on load if the edit had errors) #}
+<dialog
+    id="group-dialog"
+    class="modal"
+    aria-labelledby="group-dialog-title"
+    {% if edit_group_id %}data-autoopen{% endif %}
+>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="group-dialog-title">
+                Edit group
+                <span class="badge" id="group-dialog-id">{% if edit_group_id %}#{{ edit_group_id }}{% endif %}</span>
+            </h2>
+            <button
+                type="button"
+                class="modal-close"
+                data-close
+                aria-label="Close"
+            >
+                &times;
+            </button>
+        </div>
+
+        {% if edit_errors %}
+        <div class="alert alert-error" role="alert" data-edit-errors>
+            <ul>
+                {% for error in edit_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form
+            id="edit-group-form"
+            class="create_group"
+            method="post"
+            action="{% if edit_group_id %}{{ url_for('.edit_group', group_id=edit_group_id) }}{% endif %}"
+        >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <fieldset class="form-body">
+                {{ group_fields('edit', societies, edit_values, max_shooters) }}
+            </fieldset>
+        </form>
+
+        <div class="modal-footer">
+            {# separate form : a form cannot be inside another form #}
+            <form
+                id="delete-group-form"
+                method="post"
+                action="{% if edit_group_id %}{{ url_for('.remove_group', group_id=edit_group_id) }}{% endif %}"
+            >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button
+                    type="submit"
+                    id="delete-group-button"
+                    class="btn btn-danger"
+                >
+                    Delete group
+                </button>
+            </form>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" data-close>
+                    Cancel
+                </button>
+                <button
+                    type="submit"
+                    form="edit-group-form"
+                    class="btn btn-primary"
+                >
+                    Save changes
+                </button>
+            </div>
+        </div>
+    </div>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/groups.js') }}"></script>
+{% endblock %}

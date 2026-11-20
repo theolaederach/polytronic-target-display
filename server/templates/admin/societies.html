@@ -1,0 +1,275 @@
+{% extends "admin/base.html" %}
+{% block title %}Admin - Societies{% endblock %}
+{% block content %}
+
+{#
+    Fields shared by the creation form and the edit popup.
+    "prefix" keeps the ids unique, as both are on the same page.
+#}
+{% macro society_fields(prefix, values) %}
+<div class="form-row">
+    <div class="form-field">
+        <label for="{{ prefix }}_name">Society name</label>
+        <input
+            type="text"
+            id="{{ prefix }}_name"
+            name="name"
+            maxlength="100"
+            placeholder="Name of the society"
+            autocomplete="off"
+            value="{{ values.get('name', '') }}"
+            required
+        />
+    </div>
+
+    <div class="form-field">
+        <label for="{{ prefix }}_location">Location</label>
+        <input
+            type="text"
+            id="{{ prefix }}_location"
+            name="location"
+            maxlength="100"
+            placeholder="Location of the society"
+            autocomplete="off"
+            value="{{ values.get('location', '') }}"
+            required
+        />
+    </div>
+</div>
+{% endmacro %}
+
+<h1>Societies</h1>
+
+{# message sent by the route after a society was created, edited or deleted #}
+{% for category, message in get_flashed_messages(with_categories=true) %}
+<p class="alert alert-{{ category }}" role="status">{{ message }}</p>
+{% endfor %}
+
+<div class="container">
+    <h2>Create a new society</h2>
+
+    {% if errors %}
+    <div class="alert alert-error" role="alert">
+        <ul>
+            {% for error in errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <form
+        class="create_group"
+        method="post"
+        action="{{ url_for('.societies_page') }}"
+    >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <fieldset class="form-body">
+            {{ society_fields('create', values) }}
+
+            <div class="form-actions">
+                <input type="submit" value="Create the society" />
+            </div>
+        </fieldset>
+    </form>
+</div>
+
+<div class="container">
+    <h2>List of societies <span class="badge">{{ societies|length }}</span></h2>
+    {% if societies %}
+    <p class="muted table-hint">Click a society to edit or delete it.</p>
+    {% endif %}
+
+    <div class="table-wrapper">
+        <table class="societies-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Location</th>
+                    <th>Shooters</th>
+                    <th>Groups</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# the data-* attributes are read by societies.js to fill the popup #}
+                {% for society in societies %}
+                <tr
+                    class="group-row"
+                    data-society-id="{{ society.id }}"
+                    data-name="{{ society.name }}"
+                    data-location="{{ society.location }}"
+                    data-edit-url="{{ url_for('.edit_society', society_id=society.id) }}"
+                    data-delete-url="{{ url_for('.remove_society', society_id=society.id) }}"
+                >
+                    <td class="num">{{ society.id }}</td>
+                    <td class="group-name">
+                        {# a real button : reachable and usable with the keyboard #}
+                        <button type="button" class="row-link">
+                            {{ society.name or "(no name)" }}
+                        </button>
+                    </td>
+                    <td>{{ society.location or "—" }}</td>
+                    <td class="num">{{ society.shooter_count }}</td>
+                    <td class="num">{{ society.group_count }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td class="empty" colspan="5">No society yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="container">
+    <h2>Society of the shooters <span class="badge">{{ shooters|length }}</span></h2>
+
+    {% if shooter_errors %}
+    <div class="alert alert-error" role="alert">
+        <ul>
+            {% for error in shooter_errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('.assign_shooters') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <div class="table-wrapper">
+            <table class="shooters-table">
+                <thead>
+                    <tr>
+                        <th>Number</th>
+                        <th>Name</th>
+                        <th>Society</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for shooter in shooters %}
+                    <tr>
+                        <td class="num">{{ shooter.number }}</td>
+                        <td>{{ shooter.name or "Unnamed" }}</td>
+                        <td>
+                            {# the field name carries the id of the shooter #}
+                            <select
+                                name="shooter_{{ shooter.id }}"
+                                aria-label="Society of the shooter {{ shooter.number }}"
+                            >
+                                <option value="" {% if shooter.society_id is none %}selected{% endif %}>
+                                    No society
+                                </option>
+                                {% for society in societies %}
+                                <option
+                                    value="{{ society.id }}"
+                                    {% if shooter.society_id == society.id %}selected{% endif %}
+                                >
+                                    {{ society.label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td class="empty" colspan="3">No shooter yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if shooters %}
+        <div class="form-actions">
+            <input type="submit" value="Save the societies of the shooters" />
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+{# Edit popup, opened by societies.js (or opened on load if the edit had errors) #}
+<dialog
+    id="society-dialog"
+    class="modal"
+    aria-labelledby="society-dialog-title"
+    {% if edit_society_id %}data-autoopen{% endif %}
+>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="society-dialog-title">
+                Edit society
+                <span class="badge" id="society-dialog-id">{% if edit_society_id %}#{{ edit_society_id }}{% endif %}</span>
+            </h2>
+            <button
+                type="button"
+                class="modal-close"
+                data-close
+                aria-label="Close"
+            >
+                &times;
+            </button>
+        </div>
+
+        {% if edit_errors %}
+        <div class="alert alert-error" role="alert" data-edit-errors>
+            <ul>
+                {% for error in edit_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form
+            id="edit-society-form"
+            class="create_group"
+            method="post"
+            action="{% if edit_society_id %}{{ url_for('.edit_society', society_id=edit_society_id) }}{% endif %}"
+        >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <fieldset class="form-body">
+                {{ society_fields('edit', edit_values) }}
+            </fieldset>
+        </form>
+
+        <div class="modal-footer">
+            {# separate form : a form cannot be inside another form #}
+            <form
+                id="delete-society-form"
+                method="post"
+                action="{% if edit_society_id %}{{ url_for('.remove_society', society_id=edit_society_id) }}{% endif %}"
+            >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button
+                    type="submit"
+                    id="delete-society-button"
+                    class="btn btn-danger"
+                >
+                    Delete society
+                </button>
+            </form>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" data-close>
+                    Cancel
+                </button>
+                <button
+                    type="submit"
+                    form="edit-society-form"
+                    class="btn btn-primary"
+                >
+                    Save changes
+                </button>
+            </div>
+        </div>
+    </div>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/societies.js') }}"></script>
+{% endblock %}

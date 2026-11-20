@@ -232,7 +232,8 @@ label {
 }
 
 select,
-input[type="submit"] {
+input[type="submit"],
+input[type="button"] {
     font: inherit;
     padding: 0.55rem 0.95rem;
     border-radius: 8px;
@@ -262,6 +263,18 @@ input[type="submit"] {
         transform 100ms ease-out;
 }
 
+input[type="button"].back {
+    margin-left: 0.5rem;
+    background-color: #ff342f;
+    border-color: #cd0403;
+    color: #6c0303;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background-color 150ms ease,
+        transform 100ms ease-out;
+}
+
 input[type="submit"]:hover {
     background-color: var(--accent-strong);
     border-color: var(--accent-strong);
@@ -270,6 +283,382 @@ input[type="submit"]:hover {
 /* Feedback instantané dès la pression */
 input[type="submit"]:active {
     transform: scale(0.97);
+}
+
+input[type="submit"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ---------- Champs de saisie : texte, nombre, mot de passe, etc. ---------- */
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="email"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="time"],
+textarea {
+    font: inherit;
+    padding: 0.55rem 0.8rem;
+    background-color: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition:
+        border-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+input[type="number"] {
+    font-variant-numeric: tabular-nums;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+input:hover:not(:disabled),
+textarea:hover:not(:disabled),
+select:hover:not(:disabled) {
+    border-color: var(--text-muted);
+}
+
+/* Focus : bordure + halo, en plus du contour clavier */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+}
+
+/* Valeur invalide, seulement après une interaction de l'utilisateur */
+input:user-invalid,
+select:user-invalid,
+textarea:user-invalid {
+    border-color: #f87171;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    width: 1.05rem;
+    height: 1.05rem;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+    accent-color: var(--accent);
+}
+
+/* ---------- Messages (succès / erreur) ---------- */
+.alert,
+.error {
+    padding: 0.75rem 1rem;
+    margin: 0 0 1rem;
+    border: 1px solid;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.alert ul {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+.alert-error,
+.error {
+    background-color: rgba(248, 113, 113, 0.12);
+    border-color: rgba(248, 113, 113, 0.45);
+    color: #fecaca;
+}
+
+.alert-success {
+    background-color: rgba(74, 222, 128, 0.12);
+    border-color: rgba(74, 222, 128, 0.4);
+    color: #bbf7d0;
+}
+
+/* ---------- Formulaire de création (page Groups) ---------- */
+.create_group fieldset {
+    min-width: 0; /* un fieldset ne doit pas déborder de sa carte */
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.create_group .form-body {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.form-row,
+.shooters-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.form-field label {
+    margin: 0;
+    font-weight: 500;
+}
+
+.form-field input,
+.form-field select {
+    width: 100%;
+}
+
+.shooters legend {
+    padding: 0;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.hint {
+    margin-left: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-soft);
+}
+
+.form-actions input[type="submit"] {
+    margin-left: 0;
+    padding: 0.65rem 1.5rem;
+}
+
+/* ---------- Liste des groupes ---------- */
+.badge {
+    margin-left: 0.4rem;
+    padding: 0.1rem 0.6rem;
+    border-radius: 999px;
+    background-color: rgba(56, 189, 248, 0.14);
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+/* Le tableau est déjà dans une carte : pas de seconde ombre */
+.container .table-wrapper table {
+    box-shadow: none;
+}
+
+.group-name {
+    font-weight: 600;
+}
+
+.shooter-number {
+    display: block; /* le numéro sous le nom, pour toutes les lignes */
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.muted {
+    color: var(--text-muted);
+}
+
+td.empty {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.table-hint {
+    margin: -0.25rem 0 0.9rem;
+    font-size: 0.85rem;
+}
+
+/* Ligne cliquable : ouvre la popup de modification */
+.group-row {
+    cursor: pointer;
+}
+
+/* Le nom est un vrai bouton (accessible au clavier) qui ressemble à du texte */
+.row-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.group-row:hover .row-link,
+.row-link:focus-visible {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* ---------- Boutons ---------- */
+.btn {
+    padding: 0.55rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease,
+        color 150ms ease,
+        transform 100ms ease-out;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-primary {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-contrast);
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-strong);
+    border-color: var(--accent-strong);
+}
+
+.btn-secondary:hover {
+    background-color: var(--surface-hover);
+}
+
+.btn-danger {
+    border-color: rgba(248, 113, 113, 0.5);
+    color: #fca5a5;
+}
+
+.btn-danger:hover {
+    background-color: rgba(248, 113, 113, 0.14);
+}
+
+/* 1er clic sur Supprimer : en attente de confirmation */
+.btn-danger.armed {
+    background-color: #dc2626;
+    border-color: #dc2626;
+    color: #fff;
+}
+
+/* ---------- Popup (<dialog>) ---------- */
+dialog.modal {
+    width: min(42rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    padding: 0; /* un clic sur le <dialog> lui-même = clic sur le fond */
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background-color: var(--surface);
+    color: var(--text);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+dialog.modal[open] {
+    animation: modal-in 180ms var(--ease-out);
+}
+
+dialog.modal::backdrop {
+    background-color: rgba(2, 6, 23, 0.7);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+@keyframes modal-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+}
+
+/* La page derrière la popup ne défile pas */
+body:has(dialog.modal[open]) {
+    overflow: hidden;
+}
+
+.modal-content {
+    padding: 1.25rem 1.5rem;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.modal-header h2 {
+    margin: 0;
+}
+
+.modal-close {
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+        background-color 150ms ease,
+        color 150ms ease;
+}
+
+.modal-close:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--text);
+}
+
+.modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-soft);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    dialog.modal[open] {
+        animation: none;
+    }
 }
 
 /* ---------- Tableaux ---------- */
@@ -531,6 +920,28 @@ td.num {
     }
 }
 
+/* Page de login */
+.no-sidebar {
+    margin-left: 0% !important;
+    width: 100% !important;
+}
+.login {
+    display: flex;
+    flex-direction: column;
+    max-width: fit-content !important;
+    justify-self: center;
+    padding: 2rem 3rem;
+}
+.login input {
+    margin-bottom: 20px;
+}
+
+.center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
 /* =========================================================
    Accessibilité
    ========================================================= */

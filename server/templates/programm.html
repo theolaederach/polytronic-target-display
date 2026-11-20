@@ -75,13 +75,12 @@
 </div>
 {% endfor %}
 
-<div
-    class="container page-link"
-    role="button"
-    tabindex="0"
-    onclick="location.href='/statistics/{{ data.programm.shooter.id }}/{{ data.programm.date }}'"
->
-    <strong>🔙 Back</strong>
+<input
+    class="back"
+    type="button"
+    value="↵ Back"
+    onclick="history.back()"
+/>
 </div>
 
 {% else %}

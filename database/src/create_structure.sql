@@ -2,7 +2,7 @@
 -- mar 27 oct 2026 20:04:34
 -- Model: New Model    Version: 1.5
 -- MySQL Workbench Forward Engineering
---
+
 -- Modification : le GUID n'est plus unique globalement (le systeme de tir
 -- le reutilise a d'autres moments et sur d'autres cibles). L'unicite est
 -- maintenant calculee avec le "parent" du GUID :
@@ -30,14 +30,77 @@ USE `polytronic-target-display` ;
 DROP TABLE IF EXISTS `polytronic-target-display`.`shooters`;
 
 CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`shooters` (
-	id INT auto_increment NOT NULL,
-	shooter_number INT NOT NULL,
-	name varchar(100) NULL,
+	`id INT auto_increment` NOT NULL,
+	`shooter_number` INT NOT NULL,
+	`name` varchar(100) NULL,
+	`birthdate` DATE NULL,
+	`society_id` INT NULL,
 	CONSTRAINT shooters_pk PRIMARY KEY (id),
-	CONSTRAINT shooters_unique UNIQUE KEY (shooter_number)
+	CONSTRAINT shooters_unique UNIQUE KEY (shooter_number),
+	CONSTRAINT `user_society_FK`
+        FOREIGN KEY (society_id)
+        REFERENCES `polytronic-target-display`.`societies` (id)
+        ON DELETE NO ACTION
+        ON UPDATE NO ACTION
 )
 ENGINE=InnoDB;
 
+-- -----------------------------------------------------
+-- Table `polytronic-target-display`.`societies`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `polytronic-target-display`.`societies`;
+
+CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`societies` (
+	id INT auto_increment NOT NULL,
+	name varchar(100) NULL,
+	location varchar(100) NULL,
+
+	CONSTRAINT societies_pk PRIMARY KEY (id),
+	CONSTRAINT societies_unique UNIQUE KEY (location)
+)
+ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `polytronic-target-display`.groups
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `polytronic-target-display`.`groups`;
+
+CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`groups` (
+	`id` INT auto_increment NOT NULL,
+	`name` varchar(100) NULL,
+	`society_id` INT NULL,
+	`shooter_1` INT NULL,
+	`shooter_2` INT NULL,
+	`shooter_3` INT NULL,
+	`shooter_4` INT NULL,
+
+	CONSTRAINT groups_pk PRIMARY KEY (id),
+	CONSTRAINT `groups_society_FK`
+        FOREIGN KEY (society_id)
+        REFERENCES `polytronic-target-display`.`societies` (id)
+        ON DELETE NO ACTION
+        ON UPDATE NO ACTION,
+    CONSTRAINT `groups_shooter_1_FK`
+            FOREIGN KEY (shooter_1)
+            REFERENCES `polytronic-target-display`.`shooters` (id)
+            ON DELETE NO ACTION
+            ON UPDATE NO ACTION,
+    CONSTRAINT `groups_shooter_2_FK`
+            FOREIGN KEY (shooter_2)
+            REFERENCES `polytronic-target-display`.`shooters` (id)
+            ON DELETE NO ACTION
+            ON UPDATE NO ACTION,
+    CONSTRAINT `groups_shooter_3_FK`
+            FOREIGN KEY (shooter_3)
+            REFERENCES `polytronic-target-display`.`shooters` (id)
+            ON DELETE NO ACTION
+            ON UPDATE NO ACTION,
+    CONSTRAINT `groups_shooter_4_FK`
+            FOREIGN KEY (shooter_4)
+            REFERENCES `polytronic-target-display`.`shooters` (id)
+            ON DELETE NO ACTION
+            ON UPDATE NO ACTION)
+ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `polytronic-target-display`.`programm`
@@ -50,6 +113,7 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`programm` (
   `score_base100` SMALLINT UNSIGNED NULL,
   `target_number` TINYINT NOT NULL,
   `shooters_id` INT NULL,
+  `group_id` INT NULL,
   `target_type` VARCHAR(4) NULL,
   `date` DATE NULL,
   `start_time` TIME(2) NOT NULL,
@@ -61,7 +125,12 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`programm` (
     FOREIGN KEY (shooters_id)
     REFERENCES `polytronic-target-display`.`shooters` (id)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+    ON UPDATE NO ACTION,
+    CONSTRAINT `programm_groups_FK`
+        FOREIGN KEY (group_id)
+        REFERENCES `polytronic-target-display`.`groups` (id)
+        ON DELETE NO ACTION
+        ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
@@ -136,6 +205,24 @@ CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`current` (
     REFERENCES `polytronic-target-display`.`series` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `polytronic-target-display`.`users`
+-- No DROP TABLE here : re-running this script must not delete the accounts.
+-- password_hash : werkzeug hash (scrypt), about 160 characters.
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `polytronic-target-display`.`users` ;
+
+CREATE TABLE IF NOT EXISTS `polytronic-target-display`.`users` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `username` VARCHAR(100) NOT NULL,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `role` VARCHAR(20) NOT NULL DEFAULT 'admin',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `username_UNIQUE` (`username` ASC))
 ENGINE = InnoDB;
 
 

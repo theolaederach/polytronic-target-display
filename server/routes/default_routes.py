@@ -43,6 +43,11 @@ def credits():
     return render_template("credits.html")
 
 
+@routes.route("/login")
+def login():
+    return render_template("admin/login.html")
+
+
 # @routes.route("/test")
 # def test():
 #    return render_template("test.html")
