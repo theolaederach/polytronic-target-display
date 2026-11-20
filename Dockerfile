@@ -41,4 +41,3 @@ EXPOSE 5000 4000
 # Start the project (web server + TCP listener); the list form lets
 # Python receive the stop signal from "docker stop"
 CMD ["python", "main.py"]
- 
