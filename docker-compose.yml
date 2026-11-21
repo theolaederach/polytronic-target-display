@@ -22,6 +22,7 @@ services:
 
   app:
     build: .
+    init: true
     env_file: .env
     environment:
       # overrides DATABASE_URL from .env: inside compose, the host is the service name
