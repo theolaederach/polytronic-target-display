@@ -1,8 +1,9 @@
 .git/
 .env
 .venv/
-__pycache__/
-*.pyc
+**/__pycache__
+**/*.pyc
 screenshots/
-test.*
+**/test.*
 *.md
+weather.json
