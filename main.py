@@ -38,8 +38,7 @@ def get_args():
     )
     parser.add_argument(
         "--debug",
-        type=bool,
-        default=False,
+        action="store_true",
         help="Set the web server (Flask) into debug mode",
     )
 
@@ -51,7 +50,7 @@ def get_args():
     )
     parser.add_argument(
         "--listen-ip",
-        default=os.getenv("URL_LISTENER", "0.0.0.0"),
+        default=os.getenv("HOST_LISTENER", "0.0.0.0"),
         help="Listen address TCP (défaut: 0.0.0.0)",
     )
     parser.add_argument(
