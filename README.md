@@ -142,7 +142,27 @@ nano .env
 chmod 600 .env
 ```
 
-3. build the container
+3. Build the container
+
+```bash
+docker compose up -d --build # --build is only for the first exec.
+```
+
+4. Create an admin account for the website
+
+```bash
+docker compose exec app python create_admin.py admin # or any other name
+```
+
+### Stoping the container
+
+normal stopping
+
+```bash
+docker compose down # add -v to clear the data
+```
+
+### Update or build the container
 
 ```bash
 docker compose up -d --build
@@ -262,7 +282,7 @@ Required variables:
 | ---------------------- | --------------------------------------------- | --------------------------------------- |
 | `DATABASE_URL`         | Hostname or IP of the MariaDB server          | `localhost`                             |
 | `DATABASE_PORT`        | DB port (default 3306)                        | `3306`                                  |
-| `DATABASE_USER`        | DB user                                       | `user`                                  |
+| `DATABASE_USER`        | DB user                                       | `user` (_But nerver `root`!_)           |
 | `DATABASE_PASSWORD`    | DB password                                   | `password`                              |
 | `DATABASE_NAME`        | DB name                                       | `polytronic-target-display`             |
 | `HOST_LISTENER`        | IP to bind the TCP listener (e.g. `0.0.0.0`)  | `0.0.0.0`                               |
