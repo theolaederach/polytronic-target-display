@@ -168,6 +168,8 @@ docker compose down # add -v to clear the data
 docker compose up -d --build
 ```
 
+The container runs the project with **gunicorn** (`wsgi.py`), with **one worker only**: the TCP listener and the web API share data in memory, so they must stay in the same process. Do not increase `--workers` in the `Dockerfile`. `python main.py` is still used for the manual installation.
+
 ---
 
 ## Installation (Manual)
