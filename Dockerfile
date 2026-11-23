@@ -38,6 +38,10 @@ USER app
 # (the real publishing is done in docker-compose.yml)
 EXPOSE 5000 4000
 
-# Start the project (web server + TCP listener); the list form lets
-# Python receive the stop signal from "docker stop"
-CMD ["python", "main.py"]
+# Start the project with gunicorn (production server) through wsgi.py, which
+# also starts the TCP listener and the weather updater.
+# --workers 1 : the listener and the API share data in memory, so there must be
+#               only one process (--threads handles the parallel requests)
+# --worker-tmp-dir /dev/shm : avoids false "worker timeout" in Docker
+# The list form lets gunicorn receive the stop signal from "docker stop"
+CMD ["gunicorn", "--workers", "1", "--threads", "4", "--bind", "0.0.0.0:5000", "--worker-tmp-dir", "/dev/shm", "wsgi:app"]
