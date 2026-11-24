@@ -304,15 +304,15 @@ Required variables:
 - [ ] (on progress) Make the home page of the website
 - [ ] Make the project deployable on docker
 - [ ] print auto-genereted stand sheet
-- [x] Add a `date` column to `programm` table
 - [ ] Add a zone for sponsors and results table
 - [ ] Add a setup page for the competitions and everthing
 - [ ] Add categories (age, gender) and leaderboard.
-- [ ] Add more shooter's information like birthdate or shooting society.
-- [ ] Add groups for competitions.
+- [ ] Add more shooter's information like birthdate or shooting society..
 
 <details><summary>Alreader done</summary>
 
+- [x] Add a `date` column to `programm` table
+- [x] Add groups for competitions
 - [x] make the target on the web page responsive
 - [x] auto change the type of target on the webpage
 - [x] Add charts and statistics for each shooter
