@@ -12,15 +12,7 @@ import mariadb
 logger = logging.getLogger(__name__)
 
 from database.connection import _get_connection, execute_request
-
-
-def get_current(target_number: int) -> tuple[int | None, int | None]:
-    """Return (programm_id, series_id) of the target, read from the db."""
-    rows = execute_request(
-        "SELECT programm_id, series_id FROM current WHERE target_number = ?",
-        (target_number,),
-    )
-    return (rows[0][0], rows[0][1]) if rows else (None, None)
+from database.reader import get_current
 
 
 def getShooterByNumber(shooter_number: int) -> tuple[int, str]:
@@ -121,9 +113,7 @@ def _get_shooter_ids(
     return shooter_ids + [None] * (4 - len(shooter_ids))
 
 
-def create_group(
-    name: str, society_id: int, shooter_numbers: list[int]
-) -> int | None:
+def create_group(name: str, society_id: int, shooter_numbers: list[int]) -> int | None:
     """
     Insert a new group with its shooters, in one transaction.
 

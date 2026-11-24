@@ -98,6 +98,80 @@ _SHOT -> Data type
 
 ---
 
+## Installation (Docker)
+
+Requirement :
+<details><summary>docker compose :</summary>
+
+```bash
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER
+```
+
+Disconnect and reconnect session/ssh
+
+```bash
+docker compose version
+```
+
+</details>
+
+1. clone the repo
+
+```bash
+git clone https://github.com/theolaederach/polytronic-target-display
+cd polytronic-target-display/
+```
+
+setup the env variable
+
+2. generate the secret key
+
+```bash
+python3 -c "import secrets; print(secrets.token_hex(32))"   # Create a SECRET_KEY
+```
+
+copy and paste the output into the .env
+
+Details of the environnement variable -> [here](#environment-variables)
+
+```bash
+cp .env.example .env
+# Edit the .env and complete the field
+nano .env
+chmod 600 .env
+```
+
+3. Build the container
+
+```bash
+docker compose up -d --build # --build is only for the first exec.
+```
+
+4. Create an admin account for the website
+
+```bash
+docker compose exec app python create_admin.py admin # or any other name
+```
+
+### Stoping the container
+
+normal stopping
+
+```bash
+docker compose down # add -v to clear the data
+```
+
+### Update or build the container
+
+```bash
+docker compose up -d --build
+```
+
+The container runs the project with **gunicorn** (`wsgi.py`), with **one worker only**: the TCP listener and the web API share data in memory, so they must stay in the same process. Do not increase `--workers` in the `Dockerfile`. `python main.py` is still used for the manual installation.
+
+---
+
 ## Installation (Manual)
 
 ```bash
@@ -112,6 +186,8 @@ source .venv/bin/activate   # On Windows: .venv\Scripts\activate
 # 3. Install Python dependencies
 pip install -r requirements.txt
 ```
+
+Details of the environnement variable -> [here](#environment-variables)
 
 ### Database setup
 
@@ -140,35 +216,6 @@ docker exec -i polytronic-mariadb \
 ```
 
 The SQL script creates the tables `programm`, `series`, and `shots`.
-
-### Environment variables
-
-Copy the example file and edit it with your own values:
-
-```bash
-cp .env.example .env
-```
-
-Required variables:
-
-| Variable               | Description                                   | Example                                 |
-| ---------------------- | --------------------------------------------- | --------------------------------------- |
-| `DATABASE_URL`         | Hostname or IP of the MariaDB server          | `localhost`                             |
-| `DATABASE_PORT`        | DB port (default 3306)                        | `3306`                                  |
-| `DATABASE_USER`        | DB user                                       | `user`                                  |
-| `DATABASE_PASSWORD`    | DB password                                   | `password`                              |
-| `DATABASE_NAME`        | DB name                                       | `polytronic-target-display`             |
-| `HOST_LISTENER`        | IP to bind the TCP listener (e.g. `0.0.0.0`)  | `0.0.0.0`                               |
-| `PORT_LISTENER`        | Port for the TCP listener (default `4000`)    | `4000`                                  |
-| `ALLOWED_IPS_LISTENER` | Allowed IPs for the listener                  | `127.0.0.1,192.168.1.100,192.168.1.101` |
-| `HOST_WEB_SERVER`      | Host to bind the Flask server                 | `0.0.0.0`                               |
-| `PORT_WEB_SERVER`      | Port for the Flask server (default `5000`)    | `5000`                                  |
-| `NumberOfTarget`       | Number of targets to initialise (default `5`) | `5`                                     |
-| `OPENWEATHER_API_KEY`  | The api key to get the weather on the webpage | `ahjsbrev36ab81na81ns8rn329a`           |
-| `OPENWEATHER_LAT`      | The **latitude** of the stand                 | `46.9041`                               |
-| `OPENWEATHER_LON`      | The **longitude** of the stand                | `7.5957`                                |
-
----
 
 ## Running the application
 
@@ -200,23 +247,55 @@ options:
 ## Admin page
 
 1. set the `SECRET_KEY` into the `.env`
-  Generate a secret key with this command :
-  ```bash
-  python -c "import secrets; print(secrets.token_hex(32))"
-  ```
-  And past the output un the `.env`.
-  The secret key is used to generate the hadh of the password. Any password is stored in clear into the database.
+   Generate a secret key with this command :
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+And past the output un the `.env`.
+The secret key is used to generate the hadh of the password. Any password is stored in clear into the database.
 
 2. setup the **admin account**
-  ```bash
-  create_admin.py admin # or any other name
-  ```
-  You have to setup a password with min. `12 character`.
 
+```bash
+create_admin.py admin # or any other name
+```
+
+You have to setup a password with min. `12 character`.
 
 ### Stopping
 
 Press `Ctrl+C` in the terminal that ran `app.py` – both the Flask server and the TCP listener will terminate.
+
+---
+
+### Environment variables
+
+Copy the example file and edit it with your own values:
+
+```bash
+cp .env.example .env
+```
+
+Required variables:
+
+| Variable               | Description                                   | Example                                 |
+| ---------------------- | --------------------------------------------- | --------------------------------------- |
+| `DATABASE_URL`         | Hostname or IP of the MariaDB server          | `localhost`                             |
+| `DATABASE_PORT`        | DB port (default 3306)                        | `3306`                                  |
+| `DATABASE_USER`        | DB user                                       | `user` (_But nerver `root`!_)           |
+| `DATABASE_PASSWORD`    | DB password                                   | `password`                              |
+| `DATABASE_NAME`        | DB name                                       | `polytronic-target-display`             |
+| `HOST_LISTENER`        | IP to bind the TCP listener (e.g. `0.0.0.0`)  | `0.0.0.0`                               |
+| `PORT_LISTENER`        | Port for the TCP listener (default `4000`)    | `4000`                                  |
+| `ALLOWED_IPS_LISTENER` | Allowed IPs for the listener                  | `127.0.0.1,192.168.1.100,192.168.1.101` |
+| `HOST_WEB_SERVER`      | Host to bind the Flask server                 | `0.0.0.0`                               |
+| `PORT_WEB_SERVER`      | Port for the Flask server (default `5000`)    | `5000`                                  |
+| `NumberOfTarget`       | Number of targets to initialise (default `5`) | `5`                                     |
+| `OPENWEATHER_API_KEY`  | The api key to get the weather on the webpage | `ahjsbrev36ab81na81ns8rn329a`           |
+| `OPENWEATHER_LAT`      | The **latitude** of the stand                 | `46.9041`                               |
+| `OPENWEATHER_LON`      | The **longitude** of the stand                | `7.5957`                                |
 
 ---
 

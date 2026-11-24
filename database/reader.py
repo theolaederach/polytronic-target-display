@@ -8,10 +8,18 @@ from datetime import datetime, time
 from typing import NamedTuple
 
 import mariadb
-from werkzeug.datastructures.structures import TypeConversionDict
 
 from database.connection import execute_request
-from database.writer import get_current
+
+
+def get_current(target_number: int) -> tuple[int | None, int | None]:
+    """Return (programm_id, series_id) of the target, read from the db."""
+    rows = execute_request(
+        "SELECT programm_id, series_id FROM current WHERE target_number = ?",
+        (target_number,),
+    )
+    return (rows[0][0], rows[0][1]) if rows else (None, None)
+
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +147,9 @@ def list_societies() -> list[Society]:
         logger.exception("DB reading error on the societies table")
         raise
 
-    return [Society(row[0], _society_label(row[0], row[1], row[2])) for row in rows or []]
+    return [
+        Society(row[0], _society_label(row[0], row[1], row[2])) for row in rows or []
+    ]
 
 
 # One query joins the groups with the societies and with the shooters

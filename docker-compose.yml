@@ -1,0 +1,39 @@
+services:
+  db:
+    image: mariadb:11
+    environment:
+      # values come from the .env file (read automatically by compose)
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"  # root password generated, not needed by the app
+      MARIADB_DATABASE: ${DATABASE_NAME}
+      MARIADB_USER: ${DATABASE_USER}
+      MARIADB_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      # named volume: keeps the data when the container is recreated
+      - db_data:/var/lib/mysql
+      # SQL scripts in this folder run once, on the first start (empty volume)
+      - ./database/src/create_structure.sql:/docker-entrypoint-initdb.d/create_structure.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  app:
+    build: .
+    init: true
+    env_file: .env
+    environment:
+      # overrides DATABASE_URL from .env: inside compose, the host is the service name
+      DATABASE_URL: db
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+      - "4000:4000"
+    restart: unless-stopped
+
+volumes:
+  db_data:

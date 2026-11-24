@@ -1,12 +1,7 @@
-{% extends "admin/base.html" %}
-{% block title %}Admin - Societies{% endblock %}
-{% block content %}
-
-{#
-    Fields shared by the creation form and the edit popup.
-    "prefix" keeps the ids unique, as both are on the same page.
-#}
-{% macro society_fields(prefix, values) %}
+{% extends "admin/base.html" %} {% block title %}Admin - Societies{% endblock %}
+{% block content %} {# Fields shared by the creation form and the edit popup.
+"prefix" keeps the ids unique, as both are on the same page. #} {% macro
+society_fields(prefix, values) %}
 <div class="form-row">
     <div class="form-field">
         <label for="{{ prefix }}_name">Society name</label>
@@ -93,8 +88,8 @@
                 </tr>
             </thead>
             <tbody>
-                {# the data-* attributes are read by societies.js to fill the popup #}
-                {% for society in societies %}
+                {# the data-* attributes are read by societies.js to fill the
+                popup #} {% for society in societies %}
                 <tr
                     class="group-row"
                     data-society-id="{{ society.id }}"
@@ -105,7 +100,8 @@
                 >
                     <td class="num">{{ society.id }}</td>
                     <td class="group-name">
-                        {# a real button : reachable and usable with the keyboard #}
+                        {# a real button : reachable and usable with the
+                        keyboard #}
                         <button type="button" class="row-link">
                             {{ society.name or "(no name)" }}
                         </button>
@@ -125,7 +121,9 @@
 </div>
 
 <div class="container">
-    <h2>Society of the shooters <span class="badge">{{ shooters|length }}</span></h2>
+    <h2>
+        Society of the shooters <span class="badge">{{ shooters|length }}</span>
+    </h2>
 
     {% if shooter_errors %}
     <div class="alert alert-error" role="alert">
@@ -160,13 +158,29 @@
                                 name="shooter_{{ shooter.id }}"
                                 aria-label="Society of the shooter {{ shooter.number }}"
                             >
-                                <option value="" {% if shooter.society_id is none %}selected{% endif %}>
+                                <option
+                                    value=""
+                                    {%
+                                    if
+                                    shooter.society_id
+                                    is
+                                    none
+                                    %}selected{%
+                                    endif
+                                    %}
+                                >
                                     No society
                                 </option>
                                 {% for society in societies %}
                                 <option
                                     value="{{ society.id }}"
-                                    {% if shooter.society_id == society.id %}selected{% endif %}
+                                    {%
+                                    if
+                                    shooter.society_id=""
+                                    ="society.id"
+                                    %}selected{%
+                                    endif
+                                    %}
                                 >
                                     {{ society.label }}
                                 </option>
@@ -191,18 +205,27 @@
     </form>
 </div>
 
-{# Edit popup, opened by societies.js (or opened on load if the edit had errors) #}
+{# Edit popup, opened by societies.js (or opened on load if the edit had errors)
+#}
 <dialog
     id="society-dialog"
     class="modal"
     aria-labelledby="society-dialog-title"
-    {% if edit_society_id %}data-autoopen{% endif %}
+    {%
+    if
+    edit_society_id
+    %}data-autoopen{%
+    endif
+    %}
 >
     <div class="modal-content">
         <div class="modal-header">
             <h2 id="society-dialog-title">
                 Edit society
-                <span class="badge" id="society-dialog-id">{% if edit_society_id %}#{{ edit_society_id }}{% endif %}</span>
+                <span class="badge" id="society-dialog-id"
+                    >{% if edit_society_id %}#{{ edit_society_id }}{% endif
+                    %}</span
+                >
             </h2>
             <button
                 type="button"
@@ -243,7 +266,11 @@
                 method="post"
                 action="{% if edit_society_id %}{{ url_for('.remove_society', society_id=edit_society_id) }}{% endif %}"
             >
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                />
                 <button
                     type="submit"
                     id="delete-society-button"
@@ -268,8 +295,6 @@
         </div>
     </div>
 </dialog>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script src="{{ url_for('static', filename='js/societies.js') }}"></script>
 {% endblock %}
